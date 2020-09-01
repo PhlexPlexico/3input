@@ -6,7 +6,8 @@
 The current features are not that much. Currently you can launch the application, and use the Python TK viewer to see the input on your PC. 
 
 ## Contributors/Credit
-- N3rds for the entirety of the old codebase. Since then I've been going through and documenting as much as I can to get a further understanding of the codebase itself.
+- [N3rds](https://github.com/n3rdswithgame) for the entirety of the old codebase. Since then I've been going through and documenting as much as I can to get a further understanding of the codebase itself.
+- [leoetlino](https://github.com/leoetlino) for helping with allocation heap and helping with the sysmodule.
 
 ## Building
  - Install [devkitPro](http://devkitpro.org/) 3DS tools.

@@ -26,8 +26,6 @@ void aptServerHook(APT_HookType, void*);
 
 int server_ctor(server_t* server, sender_func_t func, size_t size){
     //aptHook(&(server->cookie), aptServerHook, server);
-    //s32 prio = 0;
-	//svcGetThreadPriority(&prio, CUR_THREAD_HANDLE);
     memset(server, 0, sizeof(server_t));
     net_ctor(&(server->net));
     
@@ -43,7 +41,7 @@ int server_ctor(server_t* server, sender_func_t func, size_t size){
     LightEvent_Init(&(server->exit_thread), RESET_STICKY);
     LightEvent_Clear(&(server->exit_thread));
 
-    server->server_thread   = threadCreate(  server_main, server, STACK_SIZE, SERVER_PRIO, -2, false);
+    server->server_thread   = threadCreate(server_main, server, STACK_SIZE, SERVER_PRIO, -2, false);
     
     return 0;
 }
@@ -87,7 +85,6 @@ void server_main(void* server_ptr) {
             //DEBUG: Print the tick the server is sending on its child thread.
             //printf("tick %d\t%d\n",server->count, keep_running);
         }
-        
         server->sender_func(&(server->net), server->sender_info);
         keep_running = !LightEvent_TryWait(&(server->exit_thread));
     }

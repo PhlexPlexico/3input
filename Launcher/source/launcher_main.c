@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     nsInit();
     log("nsInit()");
 
-    NS_TerminateProcessTID(INPUT_TID, 5e+9);
+    NS_TerminateProcessTID(INPUT_TID, 10e+9);
     log("NS_TerminateProcessTID");
 
     u32 pid;
@@ -33,7 +33,6 @@ int main(int argc, char** argv) {
     log("nsExit()");
 
     gfxExit();
-
     u8 param[0x300];
     u8 hmac[0x20];
 

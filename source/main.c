@@ -19,7 +19,6 @@
 
 #include "servertypes.h"
 #include "ui.h"
-#define  S(c)           (((uint64_t)c * (uint64_t)1000000000))
 /*
     3Input - Input Reader background process for the 3DS.
     Copyright (C) 2020 
@@ -130,18 +129,18 @@ int brew_launch(int argc, char** argv) {
     gfxExit();
     return 0;
 }
-
+//#define  S(c)           (((uint64_t)c * (uint64_t)1000000000))
 int main_daemon(int argc, char** argv){
 	server_t serv;
-	hidInit();
+	//hidInit();
 	//aptSetSleepAllowed(false);
-	svcSleepThread(S(5));
+	//acInit();
+	//gspInit();
 	make_input_server(&serv);
 	// Make a check for Wifi? Wifi init and check access points and see if active.
-	//acInit();
+	
 	// Don't need GPU Rights if daemon?
-	//gspInit();
-	server_change_timer_freq(&serv, 1, 80, NULL);
+	//server_change_timer_freq(&serv, 1, 80, NULL);
 	// while(1){
 	// 	hidScanInput();
 		
@@ -160,13 +159,13 @@ int main_daemon(int argc, char** argv){
 	// amExit();
 	// aptExit();
 	// ptmSysmExit();
-    // gfxExit();
+    // gspExit();
     return 0;
 }
 
 int main(int argc, char** argv) {
 	
-	int is_daemon = 0; // will figure this out later
+	int is_daemon = 1; // will figure this out later
 	if(is_daemon) {
 		return main_daemon(argc, argv);;
 	} else {
