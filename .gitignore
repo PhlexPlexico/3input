@@ -1,0 +1,8 @@
+.vscode/
+build/
+*.3dsx*
+*.elf
+*.smdh
+*.cia
+out.txt
+*.dmp
