@@ -28,7 +28,7 @@ volatile hid_mem_t *hid = NULL;
 #define JSON_ENTRY(key,val)             JSON_TAB JSON_KEY_VAL(key, val) "," JSON_ENDL
 #define JSON_LENTRY(key,val)            JSON_TAB JSON_KEY_VAL(key, val) JSON_ENDL
 #define JSON_END                        "}" JSON_ENDL
-
+#define  S(c)           (((uint64_t)c * (uint64_t)1000000000))
 char input_json_raw[] =     JSON_START
                             JSON_ENTRY("non_1", "%u")
                             JSON_ENTRY("btn","%u")
@@ -60,7 +60,6 @@ void input_server_func(net_t* net, void* data) {
 
     //hidScanInput();
     //u32 kDown = hidKeysHeld();
-
     curr_pad    = &(hid->pad.pads[hid->pad.index]);
     curr_touch  = &(hid->touch.touches[hid->touch.index]);
 
@@ -75,11 +74,10 @@ void input_server_func(net_t* net, void* data) {
                 );
     net_send(net, json, json_len);
 }
-#define  S(c)           (((uint64_t)c * (uint64_t)1000000000))
 int make_input_server(server_t* server) {
-    svcSleepThread(S(9));
     if(hid == NULL) {
         hid = (volatile hid_mem_t *)hidSharedMem;
     }
+    
     return server_ctor(server, input_server_func, sizeof(struct input_server_info_t));
 }
