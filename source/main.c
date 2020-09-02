@@ -129,37 +129,39 @@ int brew_launch(int argc, char** argv) {
     gfxExit();
     return 0;
 }
-//#define  S(c)           (((uint64_t)c * (uint64_t)1000000000))
 int main_daemon(int argc, char** argv){
 	server_t serv;
-	//hidInit();
 	//aptSetSleepAllowed(false);
 	//acInit();
 	//gspInit();
+	hidInit();
+
 	make_input_server(&serv);
+	
 	// Make a check for Wifi? Wifi init and check access points and see if active.
 	
-	// Don't need GPU Rights if daemon?
 	//server_change_timer_freq(&serv, 1, 80, NULL);
-	// while(1){
-	// 	hidScanInput();
+	while(1){
+		hidScanInput();
 		
-    //     //hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-    //     u32 kHold = hidKeysHeld();
-	// 	u32 kPress = hidKeysDown();
-	// 	if(kHold & KEY_SELECT) {
-	// 		if (kPress & KEY_B)	server_change_timer_freq(&serv, 1, 1, NULL);
-	// 		if (kPress & KEY_A)	server_change_timer_freq(&serv, 1, 5, NULL);
-	// 		if (kPress & KEY_Y)	server_change_timer_freq(&serv, 1, 10, NULL);
-	// 		if (kPress & KEY_X)	server_change_timer_freq(&serv, 1, 80, NULL);
-	// 		if (kPress & KEY_START)	break;
-	// 	}
-	// }
-	// server_dtor(&serv);
+    	//hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
+        u32 kHold = hidKeysHeld();
+		u32 kPress = hidKeysDown();
+		if(kHold & KEY_SELECT) {
+			if (kPress & KEY_B)	server_change_timer_freq(&serv, 1, 1, NULL);
+			if (kPress & KEY_A)	server_change_timer_freq(&serv, 1, 5, NULL);
+			if (kPress & KEY_Y)	server_change_timer_freq(&serv, 1, 10, NULL);
+			if (kPress & KEY_X)	server_change_timer_freq(&serv, 1, 80, NULL);
+			if (kPress & KEY_START)	break;
+	 	}
+	}
+	server_dtor(&serv);
 	// amExit();
 	// aptExit();
 	// ptmSysmExit();
-    // gspExit();
+	//acExit();
+    //gspExit();
+	hidExit();
     return 0;
 }
 

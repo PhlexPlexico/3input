@@ -8,18 +8,19 @@
                 svcSleepThread(5e+8);
 
 int main(int argc, char** argv) {
-    gfxInitDefault();
-    consoleInit(GFX_BOTTOM, 0);
+    //gspInit();
+    //hidInit();
+    //consoleInit(GFX_BOTTOM, 0);
 
     nsInit();
-    log("nsInit()");
+    //log("nsInit()");
 
     NS_TerminateProcessTID(INPUT_TID, 10e+9);
-    log("NS_TerminateProcessTID");
+    //log("NS_TerminateProcessTID");
 
     u32 pid;
     int ret = NS_LaunchTitle(INPUT_TID, 0, &pid);
-    log("NS_LaunchTitle");
+    //log("NS_LaunchTitle");
     if(ret < 0) {
         printf("Launch failed\n");
         printf("error: 0x%08x", ret);
@@ -30,16 +31,16 @@ int main(int argc, char** argv) {
         }
     }
     nsExit();
-    log("nsExit()");
+    //log("nsExit()");
 
-    gfxExit();
-    u8 param[0x300];
-    u8 hmac[0x20];
+    //gspExit();
+    // u8 param[0x300];
+    // u8 hmac[0x20];
 
-    memset(param, 0, sizeof(param));
-    memset(hmac, 0, sizeof(hmac));
-    APT_PrepareToDoApplicationJump(0, 0x0004000000033500LL, 0);
-    APT_DoApplicationJump(param, sizeof(param), hmac);
+    // memset(param, 0, sizeof(param));
+    // memset(hmac, 0, sizeof(hmac));
+    // APT_PrepareToDoApplicationJump(0, 0x0004000000033500LL, 0);
+    // APT_DoApplicationJump(param, sizeof(param), hmac);
 
     return 0;
 }

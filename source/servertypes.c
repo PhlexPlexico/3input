@@ -75,11 +75,10 @@ void input_server_func(net_t* net, void* data) {
                 );
     net_send(net, json, json_len);
 }
-
+#define  S(c)           (((uint64_t)c * (uint64_t)1000000000))
 int make_input_server(server_t* server) {
-
+    svcSleepThread(S(9));
     if(hid == NULL) {
-
         hid = (volatile hid_mem_t *)hidSharedMem;
     }
     return server_ctor(server, input_server_func, sizeof(struct input_server_info_t));
