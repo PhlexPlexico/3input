@@ -21,9 +21,6 @@ void socShutdown() {
 void init_soc_stuff(void) {
     int ret;
 
-	//while(1){svcSleepThread(0);hidScanInput();if(hidKeysHeld() & KEY_START) break;}
-
-
     SOC_buffer = (u32*)memalign(SOC_ALIGN, SOC_BUFFERSIZE);
 
     if(SOC_buffer == NULL) {
@@ -132,7 +129,6 @@ void net_send(net_t *net, char* data, size_t len) {
         ret = conn_send(client, data, len);
 
         if(ret < 0) {
-            //printf_top("conn_send: %d", errno);
             if(errno == ECONNRESET || errno == EINPROGRESS) {
                 net_remove(net, i);
                 i--;

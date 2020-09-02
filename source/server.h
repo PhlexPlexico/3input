@@ -7,20 +7,20 @@
 typedef void (*sender_func_t)(net_t*, void*);
 
 typedef struct {
-    net_t net;
+    net_t net; ///< Network structure.
 
 
-    sender_func_t sender_func;
-    void* sender_info;
-    size_t server_info_size;
+    sender_func_t sender_func; ///< Stored function that the server will run.
+    void* sender_info; ///< Information of the sender.
+    size_t server_info_size; ///< Size of sender info.
 
-    int count;
-    int accept_skip;
+    int count; ///< ???
+    int accept_skip; ///< Acceptable skip for each tick.
 
-    Handle server_timer;
-    Thread server_thread;
-    LightEvent  exit_thread;
-    aptHookCookie cookie;
+    Handle server_timer; ///< svcHandle for a timer. Used for server sending items/second.
+    Thread server_thread; ///< Server thread to process the sender function.
+    LightEvent  exit_thread; ///< Event to keep the server running. 
+    aptHookCookie cookie; ///< Unused - Applet Cookie Hook.
 } server_t;
 
 /**

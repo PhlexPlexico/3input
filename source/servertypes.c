@@ -58,8 +58,6 @@ void input_server_func(net_t* net, void* data) {
     struct input_server_info_t* info = (struct input_server_info_t*) data;
     info->i++;
 
-    //hidScanInput();
-    //u32 kDown = hidKeysHeld();
     curr_pad    = &(hid->pad.pads[hid->pad.index]);
     curr_touch  = &(hid->touch.touches[hid->touch.index]);
 

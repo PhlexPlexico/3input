@@ -21,7 +21,7 @@ int conn_server_ctor(struct connection_t* conn, int max) {
     
     conn->sock = socket (AF_INET, SOCK_STREAM, IPPROTO_IP);
     if (conn->sock < 0) {
-		failExit("socket: %d %s\n", errno, strerror(errno));
+        return -1;
 	}
 
     conn->socket.sin_family = AF_INET;
@@ -30,7 +30,7 @@ int conn_server_ctor(struct connection_t* conn, int max) {
 
     if ( (ret = bind (conn->sock, (struct sockaddr *) &(conn->socket), sizeof (struct sockaddr_in))) ) {
 		close(conn->sock);
-		failExit("bind: %d %s\n", errno, strerror(errno));
+        return -1;
 	}
 
     // Set socket non blocking so we can still read input to exit
@@ -38,7 +38,7 @@ int conn_server_ctor(struct connection_t* conn, int max) {
 
 
     if ( (ret = listen(conn->sock, max)) ) {
-		failExit("listen: %d %s\n", errno, strerror(errno));
+        return -1;
 	}
 
     return 0;
@@ -61,5 +61,4 @@ int conn_dtor(struct connection_t* conn) {
 
 ssize_t conn_send(struct connection_t* conn, char* data, size_t len) {
     return send(conn->sock, data, len, 0);
-
 }

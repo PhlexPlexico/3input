@@ -40,8 +40,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-__attribute__((format(printf,1,2)))
-void failExit(const char *fmt, ...);
 
 
 
@@ -131,18 +129,13 @@ int brew_launch(int argc, char** argv) {
 }
 int main_daemon(int argc, char** argv){
 	server_t serv;
-	//aptSetSleepAllowed(false);
-	//acInit();
-	//gspInit();
-	
+	//TODO: Init WIFI and check for connections. If WiFi hiccups, maybe quit app?
+	// Otherwise, poll wifi for connection and destroy/recreate server?
+	//acInit();	
 	hidInit();
-	//svcSleepThread(90e9);
 	svcSleepThread(5e9);
 	make_input_server(&serv);
-
-	// Make a check for Wifi? Wifi init and check access points and see if active.
-	
-	//server_change_timer_freq(&serv, 1, 80, NULL);
+	//TODO: Allow use of shoulder buttons to increase/decrease frequency by 10.
 	while(1){
 		hidScanInput();
 		
@@ -151,19 +144,15 @@ int main_daemon(int argc, char** argv){
 		u32 kPress = hidKeysDown();
 		if(kHold & KEY_SELECT) {
 			if (kPress & KEY_B)	server_change_timer_freq(&serv, 1, 1, NULL);
-			if (kPress & KEY_A)	server_change_timer_freq(&serv, 1, 5, NULL);
-			if (kPress & KEY_Y)	server_change_timer_freq(&serv, 1, 10, NULL);
-			if (kPress & KEY_X)	server_change_timer_freq(&serv, 1, 80, NULL);
+			if (kPress & KEY_A)	server_change_timer_freq(&serv, 1, 10, NULL);
+			if (kPress & KEY_Y)	server_change_timer_freq(&serv, 1, 60, NULL);
+			if (kPress & KEY_X)	server_change_timer_freq(&serv, 1, 140, NULL);
 			if (kPress & KEY_START)	break;
 	 	}
 		 svcSleepThread(1e5);
 	}
 	server_dtor(&serv);
-	// amExit();
-	// aptExit();
-	// ptmSysmExit();
 	//acExit();
-    //gspExit();
 	hidExit();
     return 0;
 }
@@ -177,12 +166,6 @@ int main(int argc, char** argv) {
 		return brew_launch(argc, argv);
 	}
 
-}
-
-//---------------------------------------------------------------------------------
-char* str = "this is a test string\n";
-void test_func(net_t *net, void* server_data) {
-	net_send(net, str, strlen(str));
 }
 
 
