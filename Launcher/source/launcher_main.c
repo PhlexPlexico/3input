@@ -10,7 +10,7 @@
 int main(int argc, char** argv) {
 
     nsInit();
-
+    
     NS_TerminateProcessTID(INPUT_TID, 10e+9);
 
     u32 pid;

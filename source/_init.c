@@ -45,6 +45,9 @@ void __system_allocateHeaps(void)
         if(__ctru_linear_heap < 0x10000000) *(u32*)0x00100071 = __ctru_linear_heap;
     }
     
+    // Mappable allocator init
+	mappableInit(OS_MAP_AREA_BEGIN, OS_MAP_AREA_END);
+
     // Set up newlib heap
     fake_heap_start = (char*)__ctru_heap;
     fake_heap_end = fake_heap_start + __ctru_heap_size;

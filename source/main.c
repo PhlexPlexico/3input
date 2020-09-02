@@ -134,11 +134,14 @@ int main_daemon(int argc, char** argv){
 	//aptSetSleepAllowed(false);
 	//acInit();
 	//gspInit();
+	
+	hidInit();
+	//svcSleepThread(90e9);
 	svcSleepThread(5e9);
 	make_input_server(&serv);
-	hidInit();
-	// Make a check for Wifi? Wifi init and check access points and see if active.
 
+	// Make a check for Wifi? Wifi init and check access points and see if active.
+	
 	//server_change_timer_freq(&serv, 1, 80, NULL);
 	while(1){
 		hidScanInput();
@@ -153,6 +156,7 @@ int main_daemon(int argc, char** argv){
 			if (kPress & KEY_X)	server_change_timer_freq(&serv, 1, 80, NULL);
 			if (kPress & KEY_START)	break;
 	 	}
+		 svcSleepThread(1e5);
 	}
 	server_dtor(&serv);
 	// amExit();

@@ -75,6 +75,7 @@ void input_server_func(net_t* net, void* data) {
     net_send(net, json, json_len);
 }
 int make_input_server(server_t* server) {
+    
     if(hid == NULL) {
         hid = (volatile hid_mem_t *)hidSharedMem;
     }
