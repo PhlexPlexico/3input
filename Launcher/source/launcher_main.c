@@ -35,7 +35,7 @@ void getIpAddr(){
     server.sin_addr.s_addr = gethostid();
     //Move the cursor to the middle of the screen
     printf("\x1b[15;13H");
-    printf("\x1b[47;30mIP Address: %s\x1b[0m", inet_ntoa(server.sin_addr));
+    printf("\x1b[47;30mIP Address: %s:65534\x1b[0m", inet_ntoa(server.sin_addr));
     printf("\x1b[16;8HUse this IP in your input viewer!");
     close(sock);
     socExit();

@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+//TODO: Ifndef new3ds or old.
 typedef union {
     int32_t val;
     struct {
