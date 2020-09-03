@@ -129,9 +129,6 @@ int brew_launch(int argc, char** argv) {
 }
 int main_daemon(int argc, char** argv){
 	server_t serv;
-	//TODO: Init WIFI and check for connections. If WiFi hiccups, maybe quit app?
-	// Otherwise, poll wifi for connection and destroy/recreate server?
-	//acInit();	
 	hidInit();
 	svcSleepThread(5e9);
 	make_input_server(&serv);
