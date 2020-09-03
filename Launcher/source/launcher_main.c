@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
         printf("\x1b[31mNot connected to the internet.\n\x1b[0m");
         printf("\x1b[31m3Input will not launch. Please connect to the\n\x1b[0m");
         printf("\x1b[31minternet and try again.\x1b[0m");
-        printf("\x1b[30;8HPress B to exit");
+        printf("\x1b[30;20HPress B to exit");
     }
 	
     // Main loop
