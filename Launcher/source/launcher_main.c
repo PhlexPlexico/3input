@@ -34,7 +34,7 @@ void getIpAddr(){
     server.sin_port = htons (80);
     server.sin_addr.s_addr = gethostid();
     //Move the cursor to the middle of the screen
-    printf("\x1b[15;13H");
+    printf("\x1b[15;9H");
     printf("\x1b[47;30mIP Address: %s:65534\x1b[0m", inet_ntoa(server.sin_addr));
     printf("\x1b[16;8HUse this IP in your input viewer!");
     close(sock);
@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
     u32 kDown;
     PrintConsole topScreen;
     nsInit();
+    hidInit();
     acInit();
     ACU_GetStatus(&isConnected);
     gfxInitDefault();
@@ -88,6 +89,7 @@ int main(int argc, char** argv) {
     }
     gfxExit();
     acExit();
+    hidExit();
     nsExit();
     
     return 0;

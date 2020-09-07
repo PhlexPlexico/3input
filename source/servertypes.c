@@ -37,7 +37,7 @@ char input_json_raw[] =     JSON_START
                             JSON_ENTRY("tp_y","%hd")
                             JSON_ENTRY("ir_btn","14")/*"%u"*/
                             JSON_ENTRY("cpp_x", "14")/*"%hd"*/
-                            JSON_ENTRY("cpp_y", "14")/*"%hd"*/
+                            JSON_LENTRY("cpp_y", "14")/*"%hd"*/
                             JSON_END ;
 
 
@@ -46,12 +46,11 @@ struct input_server_info_t {
 };
 
 void input_server_func(net_t* net, void* data) {
-    static uint32_t nonce_ctr = 0;
     char json[256];
     int json_len;
 
-    pad_t*   curr_pad;
-    touch_t* curr_touch;
+    volatile pad_t*   curr_pad;
+    volatile touch_t* curr_touch;
 
     struct input_server_info_t* info = (struct input_server_info_t*) data;
     info->i++;
@@ -67,15 +66,15 @@ void input_server_func(net_t* net, void* data) {
                     curr_pad->cp.x,
                     curr_pad->cp.y,
                     curr_touch->touch.x,
-                    curr_touch->touch.y,
-                );
+                    curr_touch->touch.y
+                    );
     net_send(net, json, json_len);
 }
 int make_input_server(server_t* server) {
     
-    if(hid == NULL) {
+    //if(hid == NULL) {
         hid = (volatile hid_mem_t *)hidSharedMem;
-    }
+    //}
     
     return server_ctor(server, input_server_func, sizeof(struct input_server_info_t));
 }

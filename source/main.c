@@ -41,7 +41,11 @@
 */
 
 
-
+bool __attribute__((weak)) hidShouldUseIrrst(void)
+{
+	bool val;
+	return R_SUCCEEDED(APT_CheckNew3DS(&val)) && val;
+}
 
 //---------------------------------------------------------------------------------
 void socShutdown();/* {
@@ -129,13 +133,18 @@ int brew_launch(int argc, char** argv) {
 }
 int main_daemon(int argc, char** argv){
 	server_t serv;
-	hidInit();
+	bool isCPP;
+	//hidInit();
+	//hid = (volatile hid_mem_t *)hidSharedMem;
 	svcSleepThread(5e9);
 	make_input_server(&serv);
+	//hidExit();
+	isCPP = hidShouldUseIrrst();
+	if(isCPP)
+		irrstExit();
 	//TODO: Allow use of shoulder buttons to increase/decrease frequency by 10.
 	while(1){
 		hidScanInput();
-		
     	//hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
         u32 kHold = hidKeysHeld();
 		u32 kPress = hidKeysDown();
@@ -150,7 +159,7 @@ int main_daemon(int argc, char** argv){
 	}
 	server_dtor(&serv);
 	//acExit();
-	hidExit();
+	
     return 0;
 }
 
