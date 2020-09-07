@@ -35,7 +35,7 @@ You can then use an application to parse it, to make it more readable like so:
  - [`bannertool`](https://github.com/Steveice10/bannertool/releases) on your `PATH`.
  - [`makerom`](https://github.com/3DSGuy/Project_CTR/releases) on your `PATH`.
 
- Run `make` in both the `Launcher` directory, and the root directory. Install both `CIAs` on your 3DS, *make sure you're connected to a Wifi Access Point* and launch the Launcher! Now connect with a client (an example is provided in the `viewer` directory).
+ Run `make` in both the `Launcher` directory, and the root directory. Install both `CIAs` on your 3DS, *make sure you're connected to a Wifi Access Point* and launch the Launcher! Now connect with a client (an example is provided in the `viewer` directory). Alternatively, check the [Releases](https://github.com/PhlexPlexico/3input/releases) tab for the files.
 
 ## Changing Sending Frequency
 The main thread of the module is also reading inputs. If you wish to exit, you can press `SEL+START` to close the application and destroy anything created by it. The following will change the send rate of the inputs:
@@ -49,7 +49,7 @@ In order to view this, there is currently a _very_ rudimentary implementation wi
 
 To run this viewier, please make sure [Python3](https://www.python.org/) is installed. Once you launch 3Input from the Launcher, it will show your IP. Run it by calling `python main.py "127.0.0.1"` where the IP address is your 3DS' IP. 
 
-![](assets/viewer.png)
+![3DS Viewer](assets/viewer.png)
 
 ## TODO
 There's a few more things in the TODO pile, and these can be found in the Issues section of GitHub. Most of it is quality of life (i.e. WiFi issues), but there are a few things to improve reading from 3DS Inputs, like gryo.
