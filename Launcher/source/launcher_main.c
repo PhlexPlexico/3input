@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
         printf("\x1b[31minternet and try again.\x1b[0m");
         printf("\x1b[30;20HPress B to exit");
     }
-	
+	//TODO: Include instructions on bottom screen.
     // Main loop
 	while (aptMainLoop())
 	{
