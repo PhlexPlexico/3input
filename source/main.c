@@ -40,20 +40,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+/** From hid.c, used to check if new 3ds is in use or not.*/
 bool __attribute__((weak)) hidShouldUseIrrst(void)
 {
 	bool val;
 	return R_SUCCEEDED(APT_CheckNew3DS(&val)) && val;
 }
 
-//---------------------------------------------------------------------------------
-void socShutdown();/* {
-//---------------------------------------------------------------------------------
-	printf("waiting for socExit...\n");
-	socExit();
-
-}*/
 
 void initScreens(PrintConsole *windowOne, PrintConsole *windowTwo, PrintConsole *windowThree, PrintConsole *bottomWindow){
 	// Initialize services
@@ -131,17 +124,18 @@ int brew_launch(int argc, char** argv) {
     gfxExit();
     return 0;
 }
+
 int main_daemon(int argc, char** argv){
 	server_t serv;
 	bool isCPP;
-	//hidInit();
-	//hid = (volatile hid_mem_t *)hidSharedMem;
-	svcSleepThread(5e9);
 	make_input_server(&serv);
-	//hidExit();
+	//TODO: Pretty sure this is going to break CPP usage when implemented in reading.
+	//Will have to adjust this accordingly and maybe re-write the init of this?
+	//See https://www.3dbrew.org/wiki/IR_Services#IR_Services for why we exit IR Services.
 	isCPP = hidShouldUseIrrst();
-	if(isCPP)
+	if(isCPP){
 		irrstExit();
+	}
 	//TODO: Allow use of shoulder buttons to increase/decrease frequency by 10.
 	while(1){
 		hidScanInput();
@@ -158,8 +152,6 @@ int main_daemon(int argc, char** argv){
 		 svcSleepThread(1e5);
 	}
 	server_dtor(&serv);
-	//acExit();
-	
     return 0;
 }
 
@@ -173,7 +165,6 @@ int main(int argc, char** argv) {
 	}
 
 }
-
 
 //---------------------------------------------------------------------------------
 void failExit(const char *fmt, ...) {
