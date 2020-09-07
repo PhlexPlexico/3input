@@ -7,13 +7,12 @@ Launch the Launcher, and then connect to the 3DS IP with a client, such as the e
 
 The current implementation sends a JSON Object per defined frequency. The JSON object also contains escape sequences so an application can properly decode them. Here is an example as to what the JSON being sent looks like:
 ```JSON
-'{\n\t"non_1":145,\n\t"btn":268435456,\n\t"cp_x":134,\n\t"cp_y":-68,\n\t"tp_x":0,\n\t"tp_y":0,\n\t"ir_btn":14,\n\t"cpp_x":14,\n\t"cpp_y":14,\n\t"non_2":145\n}\n'
+'{\n\t"btn":268435456,\n\t"cp_x":134,\n\t"cp_y":-68,\n\t"tp_x":0,\n\t"tp_y":0,\n\t"ir_btn":14,\n\t"cpp_x":14,\n\t"cpp_y":14\n}\n'
 ```
 
 You can then use an application to parse it, to make it more readable like so:
 ```JSON
 {
-    "non_1":145,
     "btn":268435456,
     "cp_x":134,
     "cp_y":-68,
@@ -21,8 +20,7 @@ You can then use an application to parse it, to make it more readable like so:
     "tp_y":0,
     "ir_btn":14,
     "cpp_x":14,
-    "cpp_y":14,
-    "non_2":145
+    "cpp_y":14
 }
 ```
 
@@ -46,6 +44,12 @@ The main thread of the module is also reading inputs. If you wish to exit, you c
 - `SEL+A` - 10 per second. (Default)
 - `SEL+B` - 1 per second.
 
+## Viewing the Output
+In order to view this, there is currently a _very_ rudimentary implementation within this repository. There will hopefully be another project in the near future here for client side to show the outputs on PC. 
+
+To run this viewier, please make sure [Python3](https://www.python.org/) is installed. Once you launch 3Input from the Launcher, it will show your IP. Run it by calling `python main.py "127.0.0.1"` where the IP address is your 3DS' IP. 
+
+![](assets/viewer.png)
 
 ## TODO
 There's a few more things in the TODO pile, and these can be found in the Issues section of GitHub. Most of it is quality of life (i.e. WiFi issues), but there are a few things to improve reading from 3DS Inputs, like gryo.
