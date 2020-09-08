@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     u32 isConnected;
     u32 pid;
     u32 kDown;
-    PrintConsole topScreen;
+    PrintConsole topScreen, bottomScreen;
     nsInit();
     hidInit();
     acInit();
@@ -53,10 +53,20 @@ int main(int argc, char** argv) {
     gfxInitDefault();
 	//Initialize console for both screen using the two different PrintConsole we have defined
 	consoleInit(GFX_TOP, &topScreen);
+    consoleInit(GFX_BOTTOM, &bottomScreen);
+
     consoleSelect(&topScreen);
     if(isConnected == 3){
         getIpAddr();
         printf("\x1b[30;7HPress A to launch 3Input, B to exit\x1");
+        consoleSelect(&bottomScreen);
+        printf("\x1b[1;1HTo change frequency of sending data,\nplease use SELECT + A/B/X/Y.\n\n");
+        printf("\nSELECT + A: 10 inputs per second.\n");
+        printf("\nSELECT + B: 1 input per second.\n");
+        printf("\nSELECT + X: 140 inputs per second.\n");
+        printf("\nSELECT + Y: 60 inputs per second.\n");
+        printf("\nSELECT + L: decrease by 10 inputs per\nsecond.\n");
+        printf("\nSELECT + R: increase by 10 inputs per\nsecond.\n");
     } else{
         printf("\x1b[1;1H");
         printf("\x1b[31mNot connected to the internet.\n\x1b[0m");
@@ -64,7 +74,6 @@ int main(int argc, char** argv) {
         printf("\x1b[31minternet and try again.\x1b[0m");
         printf("\x1b[30;20HPress B to exit");
     }
-	//TODO: Include instructions on bottom screen.
     // Main loop
 	while (aptMainLoop())
 	{

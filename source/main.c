@@ -127,16 +127,18 @@ int brew_launch(int argc, char** argv) {
 
 int main_daemon(int argc, char** argv){
 	server_t serv;
-	bool isCPP;
+	int freqStep;
+	bool isN3ds;
 	make_input_server(&serv);
 	//TODO: Pretty sure this is going to break CPP usage when implemented in reading.
 	//Will have to adjust this accordingly and maybe re-write the init of this?
 	//See https://www.3dbrew.org/wiki/IR_Services#IR_Services for why we exit IR Services.
-	isCPP = hidShouldUseIrrst();
-	if(isCPP){
+	isN3ds = hidShouldUseIrrst();
+	//Default.
+	freqStep = 10;
+	if(isN3ds){
 		irrstExit();
 	}
-	//TODO: Allow use of shoulder buttons to increase/decrease frequency by 10.
 	while(1){
 		hidScanInput();
     	//hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
@@ -147,6 +149,15 @@ int main_daemon(int argc, char** argv){
 			if (kPress & KEY_A)	server_change_timer_freq(&serv, 1, 10, NULL);
 			if (kPress & KEY_Y)	server_change_timer_freq(&serv, 1, 60, NULL);
 			if (kPress & KEY_X)	server_change_timer_freq(&serv, 1, 140, NULL);
+			if (kPress & KEY_L){
+				freqStep = freqStep - 10;
+				if(freqStep-10 < 0) freqStep = 0;
+				server_change_timer_freq(&serv, 1, freqStep, NULL);
+			}
+			if (kPress & KEY_R){
+				freqStep = freqStep + 10;
+				server_change_timer_freq(&serv, 1, freqStep, NULL);
+			}
 			if (kPress & KEY_START)	break;
 	 	}
 		 svcSleepThread(1e5);

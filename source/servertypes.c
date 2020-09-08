@@ -28,7 +28,6 @@ volatile hid_mem_t *hid = NULL;
 #define JSON_ENTRY(key,val)             JSON_TAB JSON_KEY_VAL(key, val) "," JSON_ENDL
 #define JSON_LENTRY(key,val)            JSON_TAB JSON_KEY_VAL(key, val) JSON_ENDL
 #define JSON_END                        "}," JSON_ENDL
-#define  S(c)           (((uint64_t)c * (uint64_t)1000000000))
 char input_json_raw[] =     JSON_START
                             JSON_ENTRY("btn","%u")
                             JSON_ENTRY("cp_x","%hd")
@@ -60,7 +59,7 @@ void input_server_func(net_t* net, void* data) {
     
     //TODO: Expensive, change this to binary output instead
     //Parse on client side. Should take care of some heat issues.
-    //TODO: Include Circle pad pro.
+    //TODO: Include Circle pad pro/gryo/accel.
     json_len = sprintf(json,input_json_raw,
                     curr_pad->curr.val,
                     curr_pad->cp.x,
@@ -71,10 +70,8 @@ void input_server_func(net_t* net, void* data) {
     net_send(net, json, json_len);
 }
 int make_input_server(server_t* server) {
-    
-    //if(hid == NULL) {
-        hid = (volatile hid_mem_t *)hidSharedMem;
-    //}
+    // Relinquish control and use only shared HID.
+    hid = (volatile hid_mem_t *)hidSharedMem;
     
     return server_ctor(server, input_server_func, sizeof(struct input_server_info_t));
 }
