@@ -40,8 +40,8 @@ You can then use an application to parse it, to make it more readable like so:
 ## Changing Sending Frequency
 The main thread of the module is also reading inputs. If you wish to exit, you can press `SEL+START` to close the application and destroy anything created by it. The following will change the send rate of the inputs:
 - `SEL+X` - 140 per second.
-- `SEL+Y` - 60 per second.
-- `SEL+A` - 10 per second. (Default)
+- `SEL+Y` - 60 per second. (Default)
+- `SEL+A` - 10 per second. 
 - `SEL+B` - 1 per second.
 
 ## Viewing the Output

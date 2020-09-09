@@ -37,7 +37,7 @@ int server_ctor(server_t* server, sender_func_t func, size_t size){
     server->accept_skip = 2;
 
     svcCreateTimer(&(server->server_timer), RESET_PULSE);
-    svcSetTimer(server->server_timer, 0, PER_S(10));
+    svcSetTimer(server->server_timer, 0, PER_S(60));
     LightEvent_Init(&(server->exit_thread), RESET_STICKY);
     LightEvent_Clear(&(server->exit_thread));
 
