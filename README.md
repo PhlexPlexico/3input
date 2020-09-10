@@ -3,7 +3,7 @@
 3Input is an input viewer that works behind the scenes on your 3DS. Much like [HorizonMod](https://github.com/Bas25/HorizonMod), the goal is to run as a daemoized process/system module, which you can then use a client to connect to and read your inputs. This is essentially an inverse to InputRedirection in [Luma/Rosalina](https://github.com/LumaTeam/Luma3DS/wiki/Rosalina#inputredirection).
 
 ## Features
-Launch the Launcher, and then connect to the 3DS IP with a client, such as the example [viewer](https://github.com/phlexplexico/3input/viewer/).
+Launch the Launcher, write down the IP address and port that is presented to you, press A, and then connect to the 3DS IP with a client, such as the example [viewer](https://github.com/phlexplexico/3input/viewer/) (this viewer does not require the port, only the IP).
 
 The current implementation sends a JSON Object per defined frequency. The JSON object also contains escape sequences so an application can properly decode them. Here is an example as to what the JSON being sent looks like:
 ```JSON
@@ -47,7 +47,7 @@ The main thread of the module is also reading inputs. If you wish to exit, you c
 ## Viewing the Output
 In order to view this, there is currently a _very_ rudimentary implementation within this repository. There will hopefully be another project in the near future here for client side to show the outputs on PC. 
 
-To run this viewier, please make sure [Python3](https://www.python.org/) is installed. Once you launch 3Input from the Launcher, it will show your IP. Run it by calling `python main.py "127.0.0.1"` where the IP address is your 3DS' IP. 
+To run this viewier, please make sure [Python3](https://www.python.org/) is installed. Once you launch 3Input from the Launcher, it will show your IP. Write this down and press A to start 3Input on your 3DS. Then, run the viewer by calling `python main.py "127.0.0.1"` where the IP address is your 3DS' IP. No port needed!
 
 ![3DS Viewer](assets/viewer.png)
 
