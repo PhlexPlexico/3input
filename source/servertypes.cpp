@@ -71,9 +71,9 @@ void input_server_func(net_t* net, void* data) {
                     );
     net_send(net, json, json_len);
 }
-int make_input_server(server_t* server, int initFreq) {
+int make_input_server(server_t* server) {
     // Relinquish control and use only shared HID.
     hid = (volatile hid_mem_t *)hidSharedMem;
     
-    return server_ctor(server, input_server_func, sizeof(struct input_server_info_t), initFreq);
+    return server_ctor(server, input_server_func, sizeof(struct input_server_info_t));
 }

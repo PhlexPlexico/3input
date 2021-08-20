@@ -54,7 +54,7 @@ int main_daemon(int argc, char **argv)
 	server_t serv;
 	int freqStep;
 	freqStep = 10;
-	make_input_server(&serv, freqStep);
+	make_input_server(&serv);
 	
 	if (!R_SUCCEEDED(iruInit_()))
 	{
