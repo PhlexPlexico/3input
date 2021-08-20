@@ -24,7 +24,7 @@ void server_exiting_thuc(net_t*, void*);
 void aptServerHook(APT_HookType, void*);
 
 
-int server_ctor(server_t* server, sender_func_t func, size_t size){
+int server_ctor(server_t* server, sender_func_t func, size_t size, int initFrequency){
     //aptHook(&(server->cookie), aptServerHook, server);
     memset(server, 0, sizeof(server_t));
     net_ctor(&(server->net));
@@ -37,7 +37,7 @@ int server_ctor(server_t* server, sender_func_t func, size_t size){
     server->accept_skip = 2;
 
     svcCreateTimer(&(server->server_timer), RESET_PULSE);
-    svcSetTimer(server->server_timer, 0, PER_S(60));
+    svcSetTimer(server->server_timer, 0, PER_S(initFrequency));
     LightEvent_Init(&(server->exit_thread), RESET_STICKY);
     LightEvent_Clear(&(server->exit_thread));
 
@@ -109,7 +109,7 @@ void onWake(server_t* server) {
         AtomicSwap(&reopen_soc, 0);
         //("resoc\n");
     }
-    server_ctor(server, server->sender_func, server->server_info_size);    
+    server_ctor(server, server->sender_func, server->server_info_size, 10);    
 }
 
 void aptServerHook(APT_HookType hook, void* server_ptr) {

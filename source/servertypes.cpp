@@ -35,7 +35,7 @@ char input_json_raw[] =     JSON_START
                             JSON_ENTRY("cp_y","%hd")
                             JSON_ENTRY("tp_x","%hd")
                             JSON_ENTRY("tp_y","%hd")
-                            JSON_ENTRY("ir_btn","%u")/*"%u"*/
+                            JSON_ENTRY("ir_btn","%i")/*"%u"*/
                             JSON_ENTRY("cpp_x", "%hd")/*"%hd"*/
                             JSON_LENTRY("cpp_y", "%hd")/*"%hd"*/
                             JSON_END ;
@@ -58,7 +58,7 @@ void input_server_func(net_t* net, void* data) {
     curr_pad    = &(hid->pad.pads[hid->pad.index]);
     curr_touch  = &(hid->touch.touches[hid->touch.index]);
     
-    //TODO: Expensive, change this to binary output instead
+    //TODO: Expensive? change this to binary output instead
     //Parse on client side. Should take care of some heat issues.
     //TODO: Include Circle pad pro/gryo/accel.
     json_len = sprintf(json,input_json_raw,
@@ -71,9 +71,9 @@ void input_server_func(net_t* net, void* data) {
                     );
     net_send(net, json, json_len);
 }
-int make_input_server(server_t* server) {
+int make_input_server(server_t* server, int initFreq) {
     // Relinquish control and use only shared HID.
     hid = (volatile hid_mem_t *)hidSharedMem;
     
-    return server_ctor(server, input_server_func, sizeof(struct input_server_info_t));
+    return server_ctor(server, input_server_func, sizeof(struct input_server_info_t), initFreq);
 }

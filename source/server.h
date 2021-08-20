@@ -28,9 +28,10 @@ typedef struct {
  * @param server pointer to a struct of server_t.
  * @param func server functionality of type sender_func_t. e.g. found in servertypes, an input redirect.
  * @param size size of function sender_func_t.
+ * @param frequency the initial polling per second frequency.
  * @return 0 on sucess of thread creation.
  */
-int server_ctor(server_t*, sender_func_t, size_t);
+int server_ctor(server_t*, sender_func_t, size_t, int);
 
 /**
  * @brief Destructor for a server.
