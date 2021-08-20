@@ -7,6 +7,7 @@
 
 #include "ui.h"
 #include "my_hid.h"
+#include "irrst.hpp"
 
 volatile hid_mem_t *hid = NULL;
 
@@ -65,7 +66,8 @@ void input_server_func(net_t* net, void* data) {
                     curr_pad->cp.x,
                     curr_pad->cp.y,
                     curr_touch->touch.x,
-                    curr_touch->touch.y
+                    curr_touch->touch.y,
+                    iruKeysHeld_()
                     );
     net_send(net, json, json_len);
 }

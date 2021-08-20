@@ -129,25 +129,25 @@ int brew_launch(int argc, char** argv) {
 int main_daemon(int argc, char** argv){
 	server_t serv;
 	int freqStep;
-	//bool isN3ds;
+	bool isN3ds;
 
 	//NDMU_SuspendScheduler(BIT(0));
 	make_input_server(&serv);
 	//TODO: Pretty sure this is going to break CPP usage when implemented in reading.
 	//Will have to adjust this accordingly and maybe re-write the init of this?
 	//See https://www.3dbrew.org/wiki/IR_Services#IR_Services for why we exit IR Services.
-	//isN3ds = hidShouldUseIrrst();
+	isN3ds = hidShouldUseIrrst();
 	//Default.
 	freqStep = 10;
 	// if(isN3ds){
 	// 	irrstExit();
 	// }
-	iruInit_();
+	iruInit_(0);
 	
 	while(1){
-		irrstScanInput();
+		iruScanInput_();
     	//hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u32 kHold = irrstKeysHeld();
+        u32 kHold = iruKeysHeld_();
 		//u32 kPress = irrst();
 		if(kHold & KEY_SELECT) {
 			if (kHold & KEY_B)	server_change_timer_freq(&serv, 1, 1, NULL);
@@ -165,7 +165,7 @@ int main_daemon(int argc, char** argv){
 			}
 			if (kHold & KEY_START)	break;
 	 	}
-		 svcSleepThread(1e5);
+		 svcSleepThread(1e+9);
 	}
 	server_dtor(&serv);
     return 0;
