@@ -249,14 +249,14 @@ void iruExit_(void)
 
 void iruScanInput_()
 {
-    u8 state = *statePA;
+    // u8 state = *(u8*)*statePA;
     
-    if(state == 1 && irrstRefCount >= 1 && overridecpadpro == 0) { //iruser was initialized
-        irrstExit_();
-    }
-    else if(state == 0 && irrstRefCount <= 0) {
-        irrstInit_(0);
-    }
+    // if(state == 1 && irrstRefCount >= 1 && overridecpadpro == 0) { //iruser was initialized
+    //     irrstExit_();
+    // }
+    // else if(state == 0 && irrstRefCount <= 0) {
+    //     irrstInit_(0);
+    // }
     irrstScanInput_();
 }
 

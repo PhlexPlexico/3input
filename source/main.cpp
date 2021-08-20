@@ -48,24 +48,40 @@ bool __attribute__((weak)) hidShouldUseIrrst(void)
 	return R_SUCCEEDED(APT_CheckNew3DS(&val)) && val;
 }
 
+static inline bool isServiceUsable(const char *name)
+{
+    bool r;
+    return R_SUCCEEDED(srvIsServiceRegistered(&r, name)) && r;
+}
+
+static bool irInit()
+{
+    while(!isServiceUsable("ir:u")) svcSleepThread(1e+9); // Wait For service
+    srvSetBlockingPolicy(true);
+	bool success = true;
+    Result ret = iruInit_();
+    if(!R_SUCCEEDED(ret)) {
+		success = false;
+	}
+    srvSetBlockingPolicy(false);
+	return success;
+}
 
 int main_daemon(int argc, char **argv)
 {
 	server_t serv;
 	int freqStep;
-	freqStep = 10;
-	make_input_server(&serv);
 	
-	if (!R_SUCCEEDED(iruInit_()))
-	{
+	make_input_server(&serv);
+	freqStep = 10;
+	
+	if(hidShouldUseIrrst())
+		irrstExit();
+	if (!irInit()) {
 		server_dtor(&serv);
 		return -1;
 	}
-	if(hidShouldUseIrrst())
-		irrstExit();
-
-	while (1)
-	{
+	while (1) {
 		irSampling();
 		hidScanInput();
 		iruScanInput_();
