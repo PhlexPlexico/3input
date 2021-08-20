@@ -19,6 +19,7 @@
 
 #include "servertypes.h"
 #include "ui.h"
+#include "irrst.hpp"
 /*
     3Input - Input Reader background process for the 3DS.
     Copyright (C) 2020 
@@ -128,37 +129,41 @@ int brew_launch(int argc, char** argv) {
 int main_daemon(int argc, char** argv){
 	server_t serv;
 	int freqStep;
-	bool isN3ds;
+	//bool isN3ds;
+
+	//NDMU_SuspendScheduler(BIT(0));
 	make_input_server(&serv);
 	//TODO: Pretty sure this is going to break CPP usage when implemented in reading.
 	//Will have to adjust this accordingly and maybe re-write the init of this?
 	//See https://www.3dbrew.org/wiki/IR_Services#IR_Services for why we exit IR Services.
-	isN3ds = hidShouldUseIrrst();
+	//isN3ds = hidShouldUseIrrst();
 	//Default.
 	freqStep = 10;
-	if(isN3ds){
-		irrstExit();
-	}
+	// if(isN3ds){
+	// 	irrstExit();
+	// }
+	iruInit_();
+	
 	while(1){
-		hidScanInput();
+		irrstScanInput();
     	//hidKeysDown returns information about which buttons have been just pressed (and they weren't in the previous frame)
-        u32 kHold = hidKeysHeld();
-		u32 kPress = hidKeysDown();
+        u32 kHold = irrstKeysHeld();
+		//u32 kPress = irrst();
 		if(kHold & KEY_SELECT) {
-			if (kPress & KEY_B)	server_change_timer_freq(&serv, 1, 1, NULL);
-			if (kPress & KEY_A)	server_change_timer_freq(&serv, 1, 10, NULL);
-			if (kPress & KEY_Y)	server_change_timer_freq(&serv, 1, 60, NULL);
-			if (kPress & KEY_X)	server_change_timer_freq(&serv, 1, 140, NULL);
-			if (kPress & KEY_L){
+			if (kHold & KEY_B)	server_change_timer_freq(&serv, 1, 1, NULL);
+			if (kHold & KEY_A)	server_change_timer_freq(&serv, 1, 10, NULL);
+			if (kHold & KEY_Y)	server_change_timer_freq(&serv, 1, 60, NULL);
+			if (kHold & KEY_X)	server_change_timer_freq(&serv, 1, 140, NULL);
+			if (kHold & KEY_L){
 				freqStep = freqStep - 10;
 				if(freqStep-10 < 0) freqStep = 0;
 				server_change_timer_freq(&serv, 1, freqStep, NULL);
 			}
-			if (kPress & KEY_R){
+			if (kHold & KEY_R){
 				freqStep = freqStep + 10;
 				server_change_timer_freq(&serv, 1, freqStep, NULL);
 			}
-			if (kPress & KEY_START)	break;
+			if (kHold & KEY_START)	break;
 	 	}
 		 svcSleepThread(1e5);
 	}
@@ -180,23 +185,9 @@ int main(int argc, char** argv) {
 //---------------------------------------------------------------------------------
 void failExit(const char *fmt, ...) {
 //---------------------------------------------------------------------------------
-
+	
+	
+	ERRF_ThrowResultWithMessage(-1,fmt);
 	exit(0);
-
-	va_list ap;
-
-	printf(CONSOLE_RED);
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
-	printf(CONSOLE_RESET);
-	printf("\nPress B to exit\n");
-
-	while (aptMainLoop()) {
-		gspWaitForVBlank();
-		hidScanInput();
-
-		u32 kDown = hidKeysDown();
-		if (kDown & KEY_B) exit(0);
-	}
+		
 }

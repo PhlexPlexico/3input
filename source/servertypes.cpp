@@ -34,9 +34,9 @@ char input_json_raw[] =     JSON_START
                             JSON_ENTRY("cp_y","%hd")
                             JSON_ENTRY("tp_x","%hd")
                             JSON_ENTRY("tp_y","%hd")
-                            JSON_ENTRY("ir_btn","14")/*"%u"*/
-                            JSON_ENTRY("cpp_x", "14")/*"%hd"*/
-                            JSON_LENTRY("cpp_y", "14")/*"%hd"*/
+                            JSON_ENTRY("ir_btn","%u")/*"%u"*/
+                            JSON_ENTRY("cpp_x", "%hd")/*"%hd"*/
+                            JSON_LENTRY("cpp_y", "%hd")/*"%hd"*/
                             JSON_END ;
 
 
