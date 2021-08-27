@@ -31,6 +31,7 @@ Currently, the only way to view inputs for the 3DS is either using a handcam, or
 - [N3rds](https://github.com/n3rdswithgame) for the entirety of the old codebase. Since then I've been going through and documenting as much as I can to get a further understanding of the codebase itself.
 - [leoetlino](https://github.com/leoetlino) for helping with allocation heap and helping with the sysmodule.
 - [MarcusD](https://github.com/Bas25/HorizonMod) for HorizonMod. Some code was graciously borrowed within the heap allocation, and a decent reference for running a system module.
+- [hax0kartik](https://github.com/hax0kartik) for his [rehid](https://github.com/hax0kartik/rehid) work and helping me out getting the RST services working!
 
 ## Building
  - Install [devkitPro](http://devkitpro.org/) 3DS tools.
@@ -40,22 +41,22 @@ Currently, the only way to view inputs for the 3DS is either using a handcam, or
 
  Run `make` in both the `Launcher` directory, and the root directory. Install both `CIAs` on your 3DS, *make sure you're connected to a Wifi Access Point* and launch the Launcher! Now connect with a client (such as [3SharpView](https://github.com/PhlexPlexico/3SharpView) ). Alternatively, check the [Releases](https://github.com/PhlexPlexico/3input/releases) tab for the files.
 
+## Installing
+In order to install, you must install *both* CIA files, and then place the `code.ips` file in the same structure in the release. `/luma/titles/0004013000003302/code.ips`. This patch is to allow multiple hooks into the RST service. Once both CIAs are installed, run the launcher, write your IP and port down, and then press A to launch!
+
 ## Changing Sending Frequency
 The main thread of the module is also reading inputs. If you wish to exit, you can press `SEL+START` to close the application and destroy anything created by it. The following will change the send rate of the inputs:
 - `SEL+X` - 140 per second.
 - `SEL+Y` - 60 per second. (Default)
 - `SEL+A` - 10 per second. 
 - `SEL+B` - 1 per second.
+- `SEL+START` - Exits the module.
 
 ## Viewing the Output
 In order to view the output, please consider using a tool such as [3SharpView](https://github.com/PhlexPlexico/3SharpView)
 
-~~In order to view this, there is currently a _very_ rudimentary implementation within this repository. There will hopefully be another project in the near future here for client side to show the outputs on PC.
-To run this viewier, please make sure [Python3](https://www.python.org/) is installed. Once you launch 3Input from the Launcher, it will show your IP. Write this down and press A to start 3Input on your 3DS. Then, run the viewer by calling `python main.py "127.0.0.1"` where the IP address is your 3DS' IP. No port needed!~~
-
-
 ## TODO
-There's a few more things in the TODO pile, and these can be found mainly in the code, which will be ported over to the Issues/Project section in GitHub. Most of it is quality of life (i.e. WiFi issues), but there are a few things to improve reading from 3DS Inputs, like gryo and C stick without running into some issues.
+There's a few more things in the TODO pile, and these can be found mainly in the code, which will be ported over to the Issues/Project section in GitHub. Most of it is quality of life (i.e. WiFi issues).
 
 ## License
 This project is licensed under [GNU GENERAL PUBLIC LICENSE V3](https://www.gnu.org/licenses/gpl-3.0.en.html). Feel free to distribute, contribute, and make changes! Pull requests to improve functionality is always welcome!

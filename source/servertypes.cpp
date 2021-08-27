@@ -7,6 +7,7 @@
 
 #include "ui.h"
 #include "my_hid.h"
+#include "irrst.hpp"
 
 volatile hid_mem_t *hid = NULL;
 
@@ -34,9 +35,9 @@ char input_json_raw[] =     JSON_START
                             JSON_ENTRY("cp_y","%hd")
                             JSON_ENTRY("tp_x","%hd")
                             JSON_ENTRY("tp_y","%hd")
-                            JSON_ENTRY("ir_btn","14")/*"%u"*/
-                            JSON_ENTRY("cpp_x", "14")/*"%hd"*/
-                            JSON_LENTRY("cpp_y", "14")/*"%hd"*/
+                            JSON_ENTRY("ir_btn","%u")/*"%u"*/
+                            JSON_ENTRY("cpp_x", "0")/*"%hd"*/
+                            JSON_LENTRY("cpp_y", "0")/*"%hd"*/
                             JSON_END ;
 
 
@@ -57,15 +58,22 @@ void input_server_func(net_t* net, void* data) {
     curr_pad    = &(hid->pad.pads[hid->pad.index]);
     curr_touch  = &(hid->touch.touches[hid->touch.index]);
     
-    //TODO: Expensive, change this to binary output instead
+    //TODO: Expensive? change this to binary output instead
     //Parse on client side. Should take care of some heat issues.
-    //TODO: Include Circle pad pro/gryo/accel.
+    //iruKeysHeld_() returns the CPP and ZL/ZR buttons.
+    // ZL 16384
+    // ZR 32768
+    // C-Up 67108864
+    // C-Down 134217728
+    // C-Left 33554432
+    // C-Right 16777216
     json_len = sprintf(json,input_json_raw,
                     curr_pad->curr.val,
                     curr_pad->cp.x,
                     curr_pad->cp.y,
                     curr_touch->touch.x,
-                    curr_touch->touch.y
+                    curr_touch->touch.y,
+                    iruKeysHeld_()
                     );
     net_send(net, json, json_len);
 }
