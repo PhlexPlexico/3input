@@ -35,9 +35,9 @@ char input_json_raw[] =     JSON_START
                             JSON_ENTRY("cp_y","%hd")
                             JSON_ENTRY("tp_x","%hd")
                             JSON_ENTRY("tp_y","%hd")
-                            JSON_ENTRY("ir_btn","%i")/*"%u"*/
-                            JSON_ENTRY("cpp_x", "%hd")/*"%hd"*/
-                            JSON_LENTRY("cpp_y", "%hd")/*"%hd"*/
+                            JSON_ENTRY("ir_btn","%u")/*"%u"*/
+                            JSON_ENTRY("cpp_x", "0")/*"%hd"*/
+                            JSON_LENTRY("cpp_y", "0")/*"%hd"*/
                             JSON_END ;
 
 
@@ -60,7 +60,13 @@ void input_server_func(net_t* net, void* data) {
     
     //TODO: Expensive? change this to binary output instead
     //Parse on client side. Should take care of some heat issues.
-    //TODO: Include Circle pad pro/gryo/accel.
+    //iruKeysHeld_() returns the CPP and ZL/ZR buttons.
+    // ZL 16384
+    // ZR 32768
+    // C-Up 67108864
+    // C-Down 134217728
+    // C-Left 33554432
+    // C-Right 16777216
     json_len = sprintf(json,input_json_raw,
                     curr_pad->curr.val,
                     curr_pad->cp.x,
