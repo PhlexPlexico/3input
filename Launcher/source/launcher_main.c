@@ -13,6 +13,8 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
+#include "ir_patch.h"
+
 #define INPUT_TID 0x0004013000495602ULL
 
 #define SOC_ALIGN       0x1000
@@ -41,10 +43,53 @@ void getIpAddr(){
     socExit();
 }
 
+
+/**
+ * ZL/ZR/C-Stick need a patched IR module, which matters on a New 3DS or an
+ * Old 3DS with a Circle Pad Pro attached. Check for (and install) the patch
+ * there, and say so on the top screen.
+ */
+void showIrPatchStatus(){
+    bool isNew3DS = false;
+    APT_CheckNew3DS(&isNew3DS);
+
+    printf("\x1b[1;1H");
+    if(!isNew3DS){
+        printf("Checking for a Circle Pad Pro...");
+        gfxFlushBuffers();
+        CppState cpp = cppDetect();
+        printf("\x1b[1;1H\x1b[2K");
+        if(cpp == CPP_ABSENT){
+            printf("IR patch: not needed (no New 3DS or Circle Pad Pro).");
+            return;
+        }
+        if(cpp == CPP_UNKNOWN){
+            printf("IR patch: could not check for a Circle Pad Pro,\nskipping.");
+            return;
+        }
+    }
+
+    int err = 0;
+    switch(irPatchEnsureInstalled(&err)){
+        case PATCH_PRESENT:
+            printf("\x1b[32mIR patch: installed.\x1b[0m");
+            break;
+        case PATCH_PRESENT_DIFFERENT:
+            printf("\x1b[32mIR patch: installed.\x1b[0m (differs from the\nbundled copy, left untouched)");
+            break;
+        case PATCH_INSTALLED:
+            printf("\x1b[33mIR patch was missing and has been installed to\n%s\n\nRESTART YOUR CONSOLE, then relaunch this app.\nIn Luma's config, turn on 'Enable loading\nexternal FIRMs and modules'.\x1b[0m", IR_PATCH_PATH);
+            break;
+        default:
+            printf("\x1b[31mIR patch: could not install it (%s).\nCopy code.ips to\n%s\x1b[0m", strerror(err), IR_PATCH_PATH);
+            break;
+    }
+}
+
 int main(int argc, char** argv) {
     u32 isConnected;
     u32 pid;
-    u32 kDown;
+    u32 kDown = 0;
     PrintConsole topScreen, bottomScreen;
     nsInit();
     hidInit();
@@ -56,6 +101,7 @@ int main(int argc, char** argv) {
     consoleInit(GFX_BOTTOM, &bottomScreen);
 
     consoleSelect(&topScreen);
+    showIrPatchStatus();
     if(isConnected == 3){
         getIpAddr();
         printf("\x1b[30;7HPress A to launch 3Input, B to exit\x1");

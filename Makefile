@@ -48,16 +48,16 @@ APP_UNIQUE_ID   :=  $(shell echo $(APP_UNIQUE_ID) | cut -c1-8)
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard
 
-CFLAGS	:=	-g -Wall -Wno-format -O0 -mword-relocations \
-			-fomit-frame-pointer -ffast-math \
+CFLAGS	:=	-Wall -Wextra -Wno-unused-parameter -O2 -mword-relocations \
+			-fomit-frame-pointer -ffunction-sections -fdata-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DNO_UI
+CFLAGS	+=	$(INCLUDE) -D__3DS__ $(CFLAGS_EXTRA)
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -std=gnu++11 -fpermissive 
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-specs=3dsx.specs $(ARCH) -Wl,--gc-sections -Wl,-Map,$(notdir $*.map)
 
 LIBS	:= -lctru -lm
 

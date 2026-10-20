@@ -1,5 +1,5 @@
 .3ds
-//.open "code.bin", "code-edited.bin", 0x00100000
+.open "code.bin", "code-edited.bin", 0x00100000
 
 patch:
 //increase handle count
@@ -37,58 +37,56 @@ add r1, sp, #0x68 // v34
 bl updatem_latestkeys
 
 .org 0x10AD40
+// Called from the CPP/ExtHID packet handler (hook at 0x1058CC) with
+// r0 = raw packet word, r1 = converted {x, y} (u16 each, 4 bytes apart).
+// Same job as before (latest ZL/ZR/C-Stick word at 0x113344), plus: the adjusted
+// C-Stick x/y are also stored in the newest entry of the ir:rst shared memory
+// ring ([0x113340] = ring base, +0x10 = index, entries at +0x18, x/y at +0xC/+0xE),
+// so the analog values are readable from a normal ir:rst shared memory mapping.
 updatem_latestkeys:
-push {lr}
-sub sp, sp, #0x18
-str r0, [sp, #4]
-str r1, [sp]
+push {r4, lr}
+sub sp, sp, #0x14
+str r0, [sp, #0x10]
 
 ldrh r3, [r1]
-strh r3, [sp, #0xE]
+strh r3, [sp]
 ldrh r3, [r1, #4]
-strh r3, [sp, #0x10]
-add r2, sp, #0xE
-mov r1, r2
-mov r0, r2
+strh r3, [sp, #2]
+mov r0, sp
+mov r1, sp
+mov r2, sp
 bl 0x10F30C
 
-ldr r3, =0x113344
-mov r1, #0
-str r1, [r3]
-
-add r0, sp, #0xE
+mov r0, sp
 bl 0x10F208
-ldr r3, =0x113344
 mov r1, #0xF000000
-and r0, r1, r0,LSR#4
-str r0, [r3]
+and r0, r1, r0, lsr #4
 
-ldr r3, [sp, #4]
+ldr r3, [sp, #0x10]
 ldr r3, [r3]
-and r3, r3, #0x200
-cmp r3, #0
-beq nextcheck
-ldr r3, =0x113344
-ldr r3, [r3]
-orr r3, r3, #0x8000
-ldr r2, =0x113344
-str r3, [r2]
+tst r3, #0x200
+orrne r0, r0, #0x8000
+tst r3, #0x400
+orrne r0, r0, #0x4000
+ldr r4, =0x113344
+str r0, [r4]
 
-nextcheck:
-ldr r3, [sp, #4]
-ldr r3, [r3]
-and r3, r3, #0x400
-cmp r3, #0
-beq return
-ldr r3, =0x113344
-ldr r3, [r3]
-orr r3, r3, #0x4000
-ldr r2, =0x113344
-str r3, [r2]
+ldr r2, =0x113340
+ldr r2, [r2]
+cmp r2, #0
+beq done
+ldr r3, [r2, #0x10]
+cmp r3, #7
+bhi done
+add r2, r2, r3, lsl #4
+ldrsh r0, [sp]
+ldrsh r1, [sp, #2]
+strh r0, [r2, #0x24]
+strh r1, [r2, #0x26]
 
-return:
-add sp, sp, #0x18
-pop {pc}
+done:
+add sp, sp, #0x14
+pop {r4, pc}
 .pool
 
 RemoveZLZR:
@@ -96,4 +94,10 @@ RemoveZLZR:
 mov r1, #0
 stmea sp, {r1, r2}
 mov r3, #0
+
+.org 0x1048D0 // Remove ZL/ZR from irrstSamplingThread
+orr r1, r1, #0x20000
+.org 0x1048E4
+orr r0, r0, #0x10000
+
 .close

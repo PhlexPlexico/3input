@@ -38,6 +38,7 @@ APP_PRODUCT_CODE:=  CTR-N-AVIA
 APP_UNIQUE_ID   :=  0x05649
 ICON            :=  assets/logo.png
 BANNER          :=  assets/banner.png
+ROMFS           :=  romfs
 
 APP_TITLE       :=  $(shell echo "$(APP_TITLE)" | cut -c1-128)
 APP_DESCRIPTION :=  $(shell echo "$(APP_DESCRIPTION)" | cut -c1-256)
@@ -54,7 +55,7 @@ CFLAGS	:=	-g -Wall -O2 -mword-relocations \
 			-fomit-frame-pointer -ffast-math \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS
+CFLAGS	+=	$(INCLUDE) -D__3DS__
 
 ifneq ($(strip $(HIMEM)),)
 CFLAGS += -D_HIMEM
@@ -175,11 +176,11 @@ $(OUTPUT)-stripped.elf: $(OUTPUT).elf
 	@echo "built ... $(notdir $@)"
 
 # =math.pow(lazyness, math.huge - 1)
-$(OUTPUT).cia: $(OUTPUT)-stripped.elf $(TOPDIR)/$(BUILD)/banner.bin $(TOPDIR)/$(BUILD)/image.bin
+$(OUTPUT).cia: $(OUTPUT)-stripped.elf $(TOPDIR)/$(BUILD)/banner.bin $(TOPDIR)/$(BUILD)/image.bin $(wildcard $(TOPDIR)/$(ROMFS)/*)
 ifeq ($(strip $(HIMEM)),)
-	@makerom -f cia -o $(OUTPUT).cia -rsf $(TOPDIR)/assets/cia.rsf -target t -exefslogo -elf $(OUTPUT)-stripped.elf -icon $(TOPDIR)/$(BUILD)/image.bin -banner $(TOPDIR)/$(BUILD)/banner.bin -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)"
+	@makerom -f cia -o $(OUTPUT).cia -rsf $(TOPDIR)/assets/cia.rsf -target t -exefslogo -elf $(OUTPUT)-stripped.elf -icon $(TOPDIR)/$(BUILD)/image.bin -banner $(TOPDIR)/$(BUILD)/banner.bin -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)" -DAPP_ROMFS="$(TOPDIR)/$(ROMFS)"
 else
-	@makerom -f cia -o $(OUTPUT).cia -rsf $(TOPDIR)/assets/cia_himem.rsf -target t -exefslogo -elf $(OUTPUT)-stripped.elf -icon $(TOPDIR)/$(BUILD)/image.bin -banner $(TOPDIR)/$(BUILD)/banner.bin -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)"
+	@makerom -f cia -o $(OUTPUT).cia -rsf $(TOPDIR)/assets/cia_himem.rsf -target t -exefslogo -elf $(OUTPUT)-stripped.elf -icon $(TOPDIR)/$(BUILD)/image.bin -banner $(TOPDIR)/$(BUILD)/banner.bin -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)" -DAPP_ROMFS="$(TOPDIR)/$(ROMFS)"
 endif
 	@echo "built ... $(notdir $@)"
 

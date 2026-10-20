@@ -6,3 +6,6 @@ build/
 *.cia
 out.txt
 *.dmp
+# Nintendo system module dumps: never commit
+code.bin
+*.app
