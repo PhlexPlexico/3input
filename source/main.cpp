@@ -1,6 +1,6 @@
 /*
     3Input - Input Reader background process for the 3DS.
-    Copyright (C) 2020
+    Copyright (C) 2026
     PhlexPlexico (https://github.com/phlexplexico)
     n3rdswithgame (https://github.com/n3rdswithgame)
 
@@ -69,10 +69,6 @@ constexpr u32 NOTIF_HOME_BUTTON = 0x204;
 /// (and for at least one packet).
 constexpr u64 HOME_PULSE_TICKS = SYSCLOCK_ARM11 / 10;
 
-int clampRate(int hz) {
-    return hz < RATE_MIN ? RATE_MIN : (hz > RATE_MAX ? RATE_MAX : hz);
-}
-
 void setTimerRate(Handle timer, int hz) {
     s64 period = 1000000000LL / hz;
     svcCancelTimer(timer);
@@ -80,20 +76,13 @@ void setTimerRate(Handle timer, int hz) {
     svcSetTimer(timer, period, period);
 }
 
-/// SELECT + START quits, SELECT + A/B/X/Y picks a send rate, SELECT + L/R
-/// nudges it. Returns false when the module should exit.
+/// SELECT + START quits. Returns false when the module should exit.
 bool handleHotkeys(u32 held, u32 prevHeld, int& rate) {
     if (!(held & KEY_SELECT))
         return true;
 
     u32 down = held & ~prevHeld;
     if (down & KEY_START) return false;
-    if (down & KEY_B)     rate = 1;
-    if (down & KEY_A)     rate = 10;
-    if (down & KEY_Y)     rate = 60;
-    if (down & KEY_X)     rate = 140;
-    if (down & KEY_L)     rate = clampRate(rate - RATE_STEP);
-    if (down & KEY_R)     rate = clampRate(rate + RATE_STEP);
     return true;
 }
 

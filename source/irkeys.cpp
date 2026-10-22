@@ -207,6 +207,11 @@ void resolveAddresses() {
 } // namespace
 
 void irkeysPoll(void) {
+    if (!cstickMem) {
+        u64 now = svcGetSystemTick();
+        if (now >= cstickRetryAt && !mapCstickMemory())
+            cstickRetryAt = now + CSTICK_RETRY_TICKS;
+    }
     if (resolved == Resolve::Unsupported)
         return;
 
