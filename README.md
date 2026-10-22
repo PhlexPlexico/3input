@@ -43,7 +43,7 @@ Currently, the only way to view inputs for the 3DS is either using a handcam, or
  - [`bannertool`](https://github.com/Steveice10/bannertool/releases) on your `PATH`.
  - [`makerom`](https://github.com/3DSGuy/Project_CTR/releases) on your `PATH`.
 
- Run `make` in both the `Launcher` directory, and the root directory. Install both `CIAs` on your 3DS, *make sure you're connected to a Wifi Access Point* and launch the Launcher! Now connect with a client (such as [3SharpView](https://github.com/PhlexPlexico/3SharpView) ). Alternatively, check the [Releases](https://github.com/PhlexPlexico/3input/releases) tab for the files.
+ Run `make` in the root directory: it builds both `3input.cia` (the module) and `Launcher/Launcher.cia`. `make module` or `make launcher` builds just one, and `make clean` cleans both. Install both `CIAs` on your 3DS, *make sure you're connected to a Wifi Access Point* and launch the Launcher! Now connect with a client (such as [3SharpView](https://github.com/PhlexPlexico/3SharpView) ). Alternatively, check the [Releases](https://github.com/PhlexPlexico/3input/releases) tab for the files.
 
 ## Installing
 Install *both* CIA files (`Launcher.cia` and `3input.cia`) and make sure Luma's "Enable loading external FIRMs and modules" option is on (hold SELECT while booting for the config menu). The IR module needs `code.ips` (rehid's patch with one addition, described below, so it stays compatible with [rehid](https://github.com/hax0kartik/rehid)) at `/luma/sysmodules/0004013000003302.ips` on the SD card (a flat file named after the title ID, not a folder; older Luma versions used `/luma/titles/0004013000003302/code.ips`), followed by a reboot.
@@ -52,16 +52,9 @@ You do not need to copy it yourself: `Launcher.cia` bundles `code.ips`. On a New
 
 Use rehid's `code.ips` with rehid's HID module, or on its own? With rehid's patch ZL/ZR are no longer reported to apps through `ir:rst` (rehid puts them into HID instead), so without rehid installed an app that reads ZL/ZR from `ir:rst` will not see them. 3Input itself reads ZL/ZR/C-Stick from the patched module either way.
 
-## Changing Sending Frequency
+## Exiting the Module
 The module runs a single loop that reads inputs, handles the hotkeys below and sends to clients. While nobody is connected it idles at a low tick rate, and only runs at the send rate once a client connects. Hold `SELECT` and press:
-- `SEL+X` - 140 per second.
-- `SEL+Y` - 60 per second. (Default)
-- `SEL+A` - 10 per second.
-- `SEL+B` - 1 per second.
-- `SEL+L` / `SEL+R` - decrease / increase the rate by 10 per second.
 - `SEL+START` - Exits the module.
-
-`ir_status` is `0` pending (patched `ir:u` not reached yet), `1` IR module **not patched** (`code.ips` not applied), `2` passive, `3` holding an `ir:rst` session, `4` yielded to a game using `ir:USER`, `5` could not get an `ir:rst` session. `cs_status` is `0` pending, `1` mapped (`cs_error` is the raw pad word of the newest `ir:rst` entry), `2` could not open `ir:rst`, `3` GetHandles failed, `4` no shared memory returned, `5` mapping failed (`cs_error` is the Result for the failures). Both viewers show both, which is the quickest way to tell why ZL/ZR/C-Stick read as 0.
 
 ## How ZL/ZR and the C-Stick are read
 HID does not report ZL, ZR or the C-Stick, they come from the IR module (`ir:rst` on New 3DS). Taking `ir:rst` over from a separate module means a game can no longer get it, so 3Input never does. It follows the same approach as [rehid](https://github.com/hax0kartik/rehid):
@@ -73,7 +66,7 @@ HID does not report ZL, ZR or the C-Stick, they come from the IR module (`ir:rst
 Because nothing here drives the sampling, ZL/ZR/C-Stick read as 0 while no process is using `ir:rst`.
 
 ## Keeping Wi-Fi on while a game runs
-3Input does the same as Rosalina, always:
+3Input does the same as Rosalina's debugger:
 - on start it opens `ac`, asks it to connect (all slots allowed) and keeps the session and that request for as long as the module runs;
 - about once a second it checks the link (`ACU_GetStatus`). If it dropped it switches the radio on (`NWMEXT_ControlWirelessEnabled(true)`) and asks `ac` to connect again, every 3 seconds, at most 10 times per drop;
 - after the link comes back it rebuilds the listening socket, since the IP may have changed.
@@ -81,6 +74,8 @@ Because nothing here drives the sampling, ZL/ZR/C-Stick read as 0 while no proce
 
 ## Viewing the Output
 In order to view the output, use a client that understands the binary packet described above, such as the bundled viewer. `python3 viewer/main.py <3ds ip>` is the tkinter overlay, and `python3 viewer/cli.py <3ds ip>` is a terminal version that needs nothing but Python (on NixOS, `nix-shell -p 'python3.withPackages (p: [p.tkinter])'` provides tkinter for the overlay). Both use [`viewer/threeinput.py`](viewer/threeinput.py), a reference decoder. Clients written for the old JSON output, such as 3SharpView, need updating to the new format.
+
+If you wish for a browser source solution, you can use [3InView](https://github.com/phlexplexico/3inview) which is a web-browser based input viewer so you can add it as a browser source in OBS!
 
 ## License
 This project is licensed under [GNU GENERAL PUBLIC LICENSE V3](https://www.gnu.org/licenses/gpl-3.0.en.html). Feel free to distribute, contribute, and make changes! Pull requests to improve functionality is always welcome!

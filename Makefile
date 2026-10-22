@@ -126,10 +126,21 @@ else
 	export APP_ICON := $(TOPDIR)/$(ICON)
 endif
 
-.PHONY: $(BUILD) clean all
+.PHONY: $(BUILD) module launcher clean all
 
 #---------------------------------------------------------------------------------
-all: $(BUILD)
+# `make` builds both CIAs: the module (this directory) and the Launcher (Launcher/).
+# `make module` or `make launcher` builds just one.
+all: module launcher
+
+module: $(BUILD)
+
+# TOPDIR is exported by this Makefile and the Launcher's Makefile only uses it
+# with ?=, so it has to be overridden or the Launcher would look for its
+# assets in this directory.
+launcher:
+	@echo launcher
+	@$(MAKE) --no-print-directory -C Launcher TOPDIR=$(CURDIR)/Launcher
 
 $(BUILD):
 	@echo $@
@@ -141,6 +152,7 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -rf $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf $(TARGET).3ds $(TARGET).cia
+	@$(MAKE) --no-print-directory -C Launcher clean TOPDIR=$(CURDIR)/Launcher
 
 
 #---------------------------------------------------------------------------------
