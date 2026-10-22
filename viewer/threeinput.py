@@ -38,7 +38,7 @@ class BTN(IntEnum):
 
 # Wire format, see source/protocol.h. Little endian, no padding:
 # magic 'I3', version, seq, buttons, cp_x, cp_y, tp_x, tp_y, cs_x, cs_y, ir_status, cs_status, ir_error, cs_error
-PACKET = struct.Struct('<2sBBIhhhhhhBB2xII')
+PACKET = struct.Struct('<2sBBIhhhhhhBBBBII')
 MAGIC = b'I3'
 VERSION = 4
 
@@ -62,15 +62,26 @@ CS_STATUS = {
     5: 'mapping ir:rst shared memory failed',
 }
 
+# source/protocol.h WifiStatus: the 3DS module's Wi-Fi keep-alive
+WIFI_STATUS = {
+    0: 'not reported (older module)',
+    1: 'starting',
+    2: 'holding the connection',
+    3: 'link down, reconnecting',
+    4: 'link down, gave up',
+    5: 'could not open ac',
+}
+
 
 def parse_packet(raw):
     """Turns one PACKET.size byte frame into the dict the UI consumes."""
-    magic, version, seq, buttons, cp_x, cp_y, tp_x, tp_y, cs_x, cs_y, ir_status, cs_status, ir_error, cs_error = PACKET.unpack(raw)
+    magic, version, seq, buttons, cp_x, cp_y, tp_x, tp_y, cs_x, cs_y, ir_status, cs_status, wifi_status, wifi_recoveries, ir_error, cs_error = PACKET.unpack(raw)
     if magic != MAGIC or version != VERSION:
         raise ValueError('bad packet header')
     j = {'seq': seq, 'cp_x': cp_x, 'cp_y': cp_y, 'tp_x': tp_x, 'tp_y': tp_y, 'cs_x': cs_x, 'cs_y': cs_y,
          'ir_status': ir_status, 'ir_error': ir_error,
-         'cs_status': cs_status, 'cs_error': cs_error}
+         'cs_status': cs_status, 'cs_error': cs_error,
+         'wifi_status': wifi_status, 'wifi_recoveries': wifi_recoveries}
     for btn in BTN:
         j[btn] = bool(buttons & btn)
     return j

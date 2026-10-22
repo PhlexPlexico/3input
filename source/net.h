@@ -20,6 +20,10 @@ void netExit(NetServer* net);
 /// Never blocks.
 void netAccept(NetServer* net);
 
+/// Closes every client and the listening socket; the listener is reopened by
+/// the next netAccept. Use after the network came back, the IP may have changed.
+void netReset(NetServer* net);
+
 /// Sends one message to every client. Slow clients miss the frame, dead
 /// clients are dropped. Never blocks.
 void netBroadcast(NetServer* net, const void* data, size_t len);

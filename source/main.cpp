@@ -23,6 +23,7 @@
 #include "hid_shared.h"
 #include "irkeys.hpp"
 #include "net.h"
+#include "wifi.hpp"
 #include "protocol.h"
 
 // libctru's default startup also brings up apt, fs and sdmc, none of which we
@@ -168,6 +169,9 @@ int main(int, char**) {
         prevHeld = held;
 
         irkeysPoll();
+        wifiPoll();
+        if (wifiTakeRecovered())
+            netReset(&net);  // link came back, possibly with a new IP
 
         u64 now = svcGetSystemTick();
         if (now >= nextAccept) {
@@ -192,7 +196,8 @@ int main(int, char**) {
             pkt.cs_x     = csX;
             pkt.cs_y     = csY;
             pkt.ir_status   = irkeysStatus();
-            pkt.reserved[0] = pkt.reserved[1] = 0;
+            pkt.wifi_status     = wifiStatus();
+            pkt.wifi_recoveries = wifiRecoveries();
             pkt.ir_error    = irkeysError();
             u8 csStatus;
             u32 csDetail;
@@ -211,6 +216,7 @@ int main(int, char**) {
     svcCloseHandle(timer);
     if (notifications)
         svcCloseHandle(notifications);
+    wifiExit();
     irkeysExit();
     netExit(&net);
     return 0;

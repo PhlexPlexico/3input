@@ -1,28 +1,4 @@
 #pragma once
-/*
-    Wire format sent to connected clients (TCP, port INPUT_PORT).
-
-    The stream is a plain sequence of fixed-size, little-endian InputPacket
-    records with no delimiters or padding. A client reads INPUT_PACKET_SIZE
-    bytes at a time; if it ever loses track it can resync by scanning for the
-    two magic bytes.
-
-    `buttons` uses the libctru KEY_* bit layout, with ZL/ZR and the C-stick
-    already merged in:
-        bit  0 A        bit  8 R        bit 14 ZL        bit 24 C-Stick Right
-        bit  1 B        bit  9 L        bit 15 ZR        bit 25 C-Stick Left
-        bit  2 Select   bit 10 X        bit 28 CPad Right bit 26 C-Stick Up
-        bit  3 Start    bit 11 Y        bit 29 CPad Left  bit 27 C-Stick Down
-        bit  4 Right    bit 12/13 GPIO  bit 30 CPad Up
-        bit  5 Left                     bit 31 CPad Down
-        bit  6 Up
-        bit  7 Down
-        bit 16 HOME (pulse, ~100 ms per press)
-    `ir_status`/`ir_error` and `cs_status`/`cs_error` report how the ZL/ZR/C-Stick
-    keys (IrStatus) and the analog C-Stick (CsStatus) paths are doing.
-    `cp_*` is the circle pad and `cs_*` the C-Stick (both about +-156), `tp_*` the touch screen in pixels
-    (0,0 when the screen is not being touched).
-*/
 #include <stdint.h>
 
 #define INPUT_PORT         65534
@@ -54,6 +30,16 @@ enum CsStatus {
     CS_MAP_FAILED      = 5, ///< Mapping the block failed. cs_error is the Result.
 };
 
+/// Wi-Fi keep-alive (wifi.cpp).
+enum WifiStatus {
+    WIFI_OFF          = 0, ///< Not reported (modules before the keep-alive existed always send 0).
+    WIFI_PENDING      = 1, ///< Not checked yet.
+    WIFI_HOLDING      = 2, ///< Link is up and we hold a connection request of our own.
+    WIFI_RECONNECTING = 3, ///< Link is down, turning the radio on and reconnecting.
+    WIFI_GAVE_UP      = 4, ///< Link stayed down after repeated attempts, waiting for it to return on its own.
+    WIFI_AC_FAILED    = 5, ///< Could not open the ac service.
+};
+
 struct __attribute__((packed)) InputPacket {
     uint8_t  magic[2]; ///< INPUT_MAGIC0, INPUT_MAGIC1
     uint8_t  version;  ///< INPUT_VERSION
@@ -67,7 +53,8 @@ struct __attribute__((packed)) InputPacket {
     int16_t  cs_y;
     uint8_t  ir_status;   ///< IrStatus
     uint8_t  cs_status;   ///< CsStatus
-    uint8_t  reserved[2]; ///< Zero.
+    uint8_t  wifi_status;     ///< WifiStatus
+    uint8_t  wifi_recoveries; ///< Times the link came back after a drop (saturates at 255).
     uint32_t ir_error;    ///< Detail for ir_status, see IrStatus.
     uint32_t cs_error;    ///< Detail for cs_status, see CsStatus.
 };

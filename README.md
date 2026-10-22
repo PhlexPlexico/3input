@@ -21,11 +21,12 @@ The module streams a fixed-size 32 byte binary packet per tick over TCP (port `6
 | 18     | s16    | C-Stick Y                                                                |
 | 20     | u8     | `ir_status`: how the ZL/ZR/C-Stick keys path is doing (see below)        |
 | 21     | u8     | `cs_status`: how the analog C-Stick path is doing (see below)            |
-| 22     | u8[2]  | Zero                                                                     |
+| 22     | u8     | `wifi_status` (Wi-Fi keep-alive, see below)                              |
+| 23     | u8     | `wifi_recoveries`: times the link came back after a drop                 |
 | 24     | u32    | `ir_error`: detail for `ir_status`                                       |
 | 28     | u32    | `cs_error`: detail for `cs_status`                                       |
 
-Button bits: `A`=0, `B`=1, `Select`=2, `Start`=3, `Right`=4, `Left`=5, `Up`=6, `Down`=7, `R`=8, `L`=9, `X`=10, `Y`=11, `ZL`=14, `ZR`=15, `HOME`=16 (a ~100 ms pulse per press, the system only announces presses), `C-Stick Right/Left/Up/Down`=24/25/26/27, `Circle pad Right/Left/Up/Down`=28/29/30/31. The wire format is defined in [`source/protocol.h`](source/protocol.h), and [`viewer/threeinput.py`](viewer/threeinput.py) is a reference decoder (`struct.Struct('<2sBBIhhhhhhBB2xII')`).
+Button bits: `A`=0, `B`=1, `Select`=2, `Start`=3, `Right`=4, `Left`=5, `Up`=6, `Down`=7, `R`=8, `L`=9, `X`=10, `Y`=11, `ZL`=14, `ZR`=15, `HOME`=16 (a ~100 ms pulse per press, the system only announces presses), `C-Stick Right/Left/Up/Down`=24/25/26/27, `Circle pad Right/Left/Up/Down`=28/29/30/31. The wire format is defined in [`source/protocol.h`](source/protocol.h), and [`viewer/threeinput.py`](viewer/threeinput.py) is a reference decoder (`struct.Struct('<2sBBIhhhhhhBBBBII')`).
 
 ## Why?
 Currently, the only way to view inputs for the 3DS is either using a handcam, or via the use of NTR and [coNTRoller-overlay](https://github.com/zed0/coNTRoller-overlay). NTR can be rather buggy, and also uses a lot more resources than necessary to just show inputs. The aim is to replace it with something less buggy, and that can run on both new and old 3DS'.
@@ -71,11 +72,15 @@ HID does not report ZL, ZR or the C-Stick, they come from the IR module (`ir:rst
 
 Because nothing here drives the sampling, ZL/ZR/C-Stick read as 0 while no process is using `ir:rst`.
 
+## Keeping Wi-Fi on while a game runs
+3Input does the same as Rosalina, always:
+- on start it opens `ac`, asks it to connect (all slots allowed) and keeps the session and that request for as long as the module runs;
+- about once a second it checks the link (`ACU_GetStatus`). If it dropped it switches the radio on (`NWMEXT_ControlWirelessEnabled(true)`) and asks `ac` to connect again, every 3 seconds, at most 10 times per drop;
+- after the link comes back it rebuilds the listening socket, since the IP may have changed.
+
+
 ## Viewing the Output
 In order to view the output, use a client that understands the binary packet described above, such as the bundled viewer. `python3 viewer/main.py <3ds ip>` is the tkinter overlay, and `python3 viewer/cli.py <3ds ip>` is a terminal version that needs nothing but Python (on NixOS, `nix-shell -p 'python3.withPackages (p: [p.tkinter])'` provides tkinter for the overlay). Both use [`viewer/threeinput.py`](viewer/threeinput.py), a reference decoder. Clients written for the old JSON output, such as 3SharpView, need updating to the new format.
-
-## TODO
-There's a few more things in the TODO pile, and these can be found mainly in the code, which will be ported over to the Issues/Project section in GitHub. Most of it is quality of life (i.e. WiFi issues).
 
 ## License
 This project is licensed under [GNU GENERAL PUBLIC LICENSE V3](https://www.gnu.org/licenses/gpl-3.0.en.html). Feel free to distribute, contribute, and make changes! Pull requests to improve functionality is always welcome!

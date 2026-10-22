@@ -12,7 +12,7 @@ import sys
 import textwrap
 import time
 
-from threeinput import BTN, Conn, IR_STATUS, CS_STATUS
+from threeinput import BTN, Conn, IR_STATUS, CS_STATUS, WIFI_STATUS
 
 PORT = 65534
 MIN_WIDTH = 20
@@ -24,7 +24,8 @@ def raw_line(j):
     return (f"seq={j['seq']} cp=({j['cp_x']},{j['cp_y']}) tp=({j['tp_x']},{j['tp_y']}) "
             f"cs=({j['cs_x']},{j['cs_y']}) {held} "
             f"[IR: {IR_STATUS.get(j['ir_status'], j['ir_status'])}, 0x{j['ir_error']:08X}] "
-            f"[CS: {CS_STATUS.get(j['cs_status'], j['cs_status'])}, 0x{j['cs_error']:08X}]")
+            f"[CS: {CS_STATUS.get(j['cs_status'], j['cs_status'])}, 0x{j['cs_error']:08X}] "
+            f"[WIFI: {WIFI_STATUS.get(j['wifi_status'], j['wifi_status'])}, recoveries {j['wifi_recoveries']}]")
 
 
 def format_block(j, width):
@@ -37,6 +38,7 @@ def format_block(j, width):
         (f"buttons: {held}", "  "),
         (f"IR: {IR_STATUS.get(j['ir_status'], j['ir_status'])} (0x{j['ir_error']:08X})", "    "),
         (f"CS: {CS_STATUS.get(j['cs_status'], j['cs_status'])} (0x{j['cs_error']:08X})", "    "),
+        (f"WIFI: {WIFI_STATUS.get(j['wifi_status'], j['wifi_status'])} (recoveries {j['wifi_recoveries']})", "    "),
     ]
     lines = []
     for text, indent in logical:

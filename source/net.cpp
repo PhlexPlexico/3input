@@ -96,6 +96,13 @@ void netExit(NetServer* net) {
     socBuffer = nullptr;
 }
 
+void netReset(NetServer* net) {
+    while (net->num_clients)
+        removeClient(net, net->num_clients - 1);
+    closeListener(net);
+    net->retry_at = 0;
+}
+
 void netAccept(NetServer* net) {
     if (net->listen_fd < 0) {
         u64 now = svcGetSystemTick();

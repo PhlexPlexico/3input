@@ -224,6 +224,7 @@ AccessControlInfo:
    - ir:rst
    - mcu::HWC
    - ns:s
+   - nwm::EXT
    - ptm:sysm
    - soc:U
    - ssl:C
@@ -247,5 +248,6 @@ SystemControlInfo:
     http: 0x0004013000002902
     i2c: 0x0004013000001e02
     mcu: 0x0004013000001f02
+    nwm: 0x0004013000002d02
     socket: 0x0004013000002e02
     ssl: 0x0004013000002f02

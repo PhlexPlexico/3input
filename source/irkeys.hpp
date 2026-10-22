@@ -1,27 +1,6 @@
 #pragma once
 #include <3ds.h>
 
-/*
-    ZL/ZR and C-Stick, read out of the (patched, see code.ips) IR module.
-
-    The patched IR module copies the latest ZL/ZR/C-Stick key word into its own
-    memory every time its ir:rst sampling thread runs, and exposes the physical
-    address of that word through ir:u (the same hook rehid uses). We resolve
-    the address once and from then on a key read is a single memory load.
-
-    3Input is a passive reader: it never initialises, shuts down or holds an
-    ir:rst session. The sampling thread is driven by whoever really needs
-    ir:rst (a game, or the system HID module), so a game can always request it
-    and keep it, and we get its keys for free while it runs. Taking ir:rst over
-    ourselves is what used to keep games from getting the extra buttons.
-    The consequence is that the word reads 0 whenever nothing is sampling.
-
-    Build with -DIRKEYS_HOLD_SESSION to get the old behaviour back: we hold one
-    ir:rst session ourselves so the keys stay live even when no game uses
-    ir:rst, stepping aside while a game owns ir:USER (the two are mutually
-    exclusive, see https://www.3dbrew.org/wiki/IR_Services).
-*/
-
 /// Cheap to call every frame. Resolves the address of the key word the first
 /// time it can (ir:u may be busy or not registered yet).
 void irkeysPoll(void);

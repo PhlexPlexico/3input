@@ -106,13 +106,6 @@ int main(int argc, char** argv) {
         getIpAddr();
         printf("\x1b[30;7HPress A to launch 3Input, B to exit\x1");
         consoleSelect(&bottomScreen);
-        printf("\x1b[1;1HTo change frequency of sending data,\nplease use SELECT + A/B/X/Y.\n\n");
-        printf("\nSELECT + A: 10 inputs per second.\n");
-        printf("\nSELECT + B: 1 input per second.\n");
-        printf("\nSELECT + X: 140 inputs per second.\n");
-        printf("\nSELECT + Y: 60 inputs per second.\n");
-        printf("\nSELECT + L: decrease by 10 inputs per\nsecond.\n");
-        printf("\nSELECT + R: increase by 10 inputs per\nsecond.\n");
     } else{
         printf("\x1b[1;1H");
         printf("\x1b[31mNot connected to the internet.\n\x1b[0m");

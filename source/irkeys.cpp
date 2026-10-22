@@ -183,13 +183,6 @@ void resolveAddresses() {
         u32 keysPA = 0;
         Result a = addressRequest(iru, IRU_GET_KEYS_PA, &keysPA);
         bool ok = R_SUCCEEDED(a) && plausiblePA(keysPA);
-#ifdef IRKEYS_HOLD_SESSION
-        u32 statePA = 0;
-        Result b = addressRequest(iru, IRU_GET_STATE_PA, &statePA);
-        ok = ok && R_SUCCEEDED(b) && plausiblePA(statePA);
-        if (ok)
-            stateByte = mapPA<u8>(statePA);
-#endif
         simpleRequest(iru, IRU_SHUTDOWN);
 
         if (R_FAILED(a)) {
@@ -211,75 +204,9 @@ void resolveAddresses() {
     svcCloseHandle(iru);
 }
 
-#ifdef IRKEYS_HOLD_SESSION
-bool acquireRst() {
-    Handle session;
-    Result res = srvGetServiceHandle(&session, "ir:rst");
-    if (R_FAILED(res)) {
-        lastError = res;
-        return false;
-    }
-
-    // GetHandles returns this session's shared memory block, which the module
-    // only keeps updated once the session is initialised (below). Keep it and
-    // map it for the analog C-Stick.
-    Handle mem = 0;
-    u32* cmd = getThreadCommandBuffer();
-    cmd[0] = IRRST_GET_HANDLES;
-    res = svcSendSyncRequest(session);
-    if (R_SUCCEEDED(res))
-        res = cmd[1];
-    if (R_SUCCEEDED(res)) {
-        mem = cmd[3];
-        if (cmd[4]) svcCloseHandle(cmd[4]);
-
-        cmd = getThreadCommandBuffer();
-        cmd[0] = IRRST_INITIALIZE;
-        cmd[1] = 10;
-        cmd[2] = 0;
-        res = svcSendSyncRequest(session);
-        if (R_SUCCEEDED(res))
-            res = cmd[1];
-    }
-
-    if (R_FAILED(res)) {
-        lastError = res;
-        cstickStatus = CS_HANDLES_FAILED;
-        cstickError = res;
-        if (mem)
-            svcCloseHandle(mem);
-        svcCloseHandle(session);
-        return false;
-    }
-    rstSession = session;
-    if (mem)
-        mapBlock(mem);
-    else
-        cstickStatus = CS_NO_MEMORY;
-    return true;
-}
-
-void releaseRst() {
-    if (!rstSession)
-        return;
-    simpleRequest(rstSession, IRRST_SHUTDOWN);
-    svcCloseHandle(rstSession);
-    rstSession = 0;
-    unmapBlock();
-}
-#endif
-
 } // namespace
 
 void irkeysPoll(void) {
-#ifndef IRKEYS_HOLD_SESSION
-    if (!cstickMem) {
-        u64 now = svcGetSystemTick();
-        if (now >= cstickRetryAt && !mapCstickMemory())
-            cstickRetryAt = now + CSTICK_RETRY_TICKS;
-    }
-#endif
-
     if (resolved == Resolve::Unsupported)
         return;
 
@@ -295,24 +222,6 @@ void irkeysPoll(void) {
             return;
         }
     }
-
-#ifdef IRKEYS_HOLD_SESSION
-    if (*stateByte) {
-        // A game owns ir:USER: step aside.
-        releaseRst();
-        status = IR_YIELDED;
-    } else if (!rstSession) {
-        u64 now = svcGetSystemTick();
-        if (now >= retryAt) {
-            if (acquireRst()) {
-                status = IR_HOLDING;
-            } else {
-                status = IR_HOLD_FAILED;
-                retryAt = now + RETRY_TICKS;
-            }
-        }
-    }
-#endif
 }
 
 // Same as libctru's hidScanInput: an out-of-range index means the last entry.
@@ -358,8 +267,5 @@ u32 irkeysRead(void) {
 }
 
 void irkeysExit(void) {
-#ifdef IRKEYS_HOLD_SESSION
-    releaseRst();
-#endif
     unmapBlock();
 }

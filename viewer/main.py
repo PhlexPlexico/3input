@@ -5,7 +5,7 @@ import sys
 
 import tkinter as tk
 
-from threeinput import BTN, Conn, IR_STATUS, CS_STATUS
+from threeinput import BTN, Conn, IR_STATUS, CS_STATUS, WIFI_STATUS
 
 # Longest line the info labels may have before they wrap, so they fit small windows.
 LABEL_WRAP = 260
@@ -139,7 +139,7 @@ class Window(tk.Frame):
             self.labels[btn] = lbl
             lbl.grid(row=i % rows, column=i // rows, sticky='w')
 
-        for k, name in enumerate(('cp', 'tp', 'cs', 'ir')):
+        for k, name in enumerate(('cp', 'tp', 'cs', 'ir', 'wifi')):
             lbl = tk.Label(self.info, text=name, wraplength=LABEL_WRAP, justify='left', anchor='w')
             self.labels[name] = lbl
             lbl.grid(row=rows + 1 + k, column=0, columnspan=2, sticky='w', pady=(6 if k == 0 else 0, 0))
@@ -166,6 +166,7 @@ class Window(tk.Frame):
             self.touch.draw(tp_x,tp_y)
 
             self.labels['cs'].config(text=f"c-stick:({self.nextInput['cs_x']},{self.nextInput['cs_y']}) {CS_STATUS.get(self.nextInput['cs_status'], '?')} (0x{self.nextInput['cs_error']:08X})")
+            self.labels['wifi'].config(text=f"WIFI: {WIFI_STATUS.get(self.nextInput['wifi_status'], '?')} (recoveries {self.nextInput['wifi_recoveries']})")
             self.labels['ir'].config(text=f"IR: {IR_STATUS.get(self.nextInput['ir_status'], '?')} (0x{self.nextInput['ir_error']:08X})")
         if not self.c.keepGoing:
             self.master.quit()
