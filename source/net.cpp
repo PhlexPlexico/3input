@@ -1,151 +1,150 @@
 #include "net.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <malloc.h>
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <unistd.h>
 
-#include "ui.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-#define SOC_ALIGN       0x1000
-#define SOC_BUFFERSIZE  0x050000
+#include <3ds.h>
 
-static u32 *SOC_buffer = NULL;
+#include "protocol.h"
 
-void socShutdown() {
-	printf("waiting for socExit...\n");
-	socExit();
+namespace {
+
+constexpr size_t SOC_ALIGN       = 0x1000;
+constexpr size_t SOC_BUFFER_SIZE = 0x50000;
+
+/// Wait this long before retrying a failed listener (wifi down, port busy...).
+constexpr u64 LISTEN_RETRY_TICKS = SYSCLOCK_ARM11 * 2;
+
+u32* socBuffer = nullptr;
+
+bool wouldBlock(int err) {
+    return err == EAGAIN || err == EWOULDBLOCK;
 }
 
-void init_soc_stuff(void) {
-    int ret;
-
-    SOC_buffer = (u32*)memalign(SOC_ALIGN, SOC_BUFFERSIZE);
-
-    if(SOC_buffer == NULL) {
-		failExit("memalign: failed to allocate\n");
-	}
-
-    if ((ret = socInit(SOC_buffer, SOC_BUFFERSIZE)) != 0) {
-    	failExit("socInit: 0x%08X\n", (unsigned int)ret);
-	}
-
-    atexit(socShutdown);
+bool setNonBlocking(int fd) {
+    int flags = fcntl(fd, F_GETFL, 0);
+    return flags >= 0 && fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0;
 }
 
-void net_resoc() {
+void closeListener(NetServer* net) {
+    if (net->listen_fd >= 0) {
+        close(net->listen_fd);
+        net->listen_fd = -1;
+    }
+}
+
+void removeClient(NetServer* net, int i) {
+    close(net->clients[i]);
+    net->clients[i] = net->clients[--net->num_clients];
+}
+
+bool openListener(NetServer* net) {
+    int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    if (fd < 0)
+        return false;
+
+    int yes = 1;
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
+    sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family      = AF_INET;
+    addr.sin_port        = htons(INPUT_PORT);
+    addr.sin_addr.s_addr = gethostid();
+
+    if (bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0 ||
+        listen(fd, NET_MAX_CLIENTS) < 0 ||
+        !setNonBlocking(fd)) {
+        close(fd);
+        return false;
+    }
+
+    net->listen_fd = fd;
+    return true;
+}
+
+} // namespace
+
+bool netInit(NetServer* net) {
+    memset(net, 0, sizeof(*net));
+    net->listen_fd = -1;
+
+    socBuffer = static_cast<u32*>(memalign(SOC_ALIGN, SOC_BUFFER_SIZE));
+    if (!socBuffer)
+        return false;
+    if (R_FAILED(socInit(socBuffer, SOC_BUFFER_SIZE))) {
+        free(socBuffer);
+        socBuffer = nullptr;
+        return false;
+    }
+    return true;
+}
+
+void netExit(NetServer* net) {
+    while (net->num_clients)
+        removeClient(net, net->num_clients - 1);
+    closeListener(net);
     socExit();
-    free(SOC_buffer);
-    init_soc_stuff();
+    free(socBuffer);
+    socBuffer = nullptr;
 }
 
-
-int net_ctor(net_t * net) {
-    int ret;
-    
-    if(!SOC_buffer) {
-        init_soc_stuff();
-    }
-
-    memset(net, 0, sizeof(net_t));
-
-    ret = conn_server_ctor(&(net->server), MAX_CONNECTIONS);
-
-    if(ret){
-        return ret;
-    }
-
-    LightLock_Init(&(net->connection_lock));
-
-    return 0;
+void netReset(NetServer* net) {
+    while (net->num_clients)
+        removeClient(net, net->num_clients - 1);
+    closeListener(net);
+    net->retry_at = 0;
 }
 
-void net_dtor(net_t * net) {
-    static char disconnecting[] = "\n3ds disconnecting\n";
-    net_send(net, disconnecting, strlen(disconnecting));
-    while(net->num_clients) {
-        conn_dtor(&(net->clients[net->num_clients--]));
-    }
-    conn_dtor(&(net->server));
-}
-
-int net_accept(net_t* net) {
-    static uint32_t soclen = sizeof(struct sockaddr_in);
-
-    struct connection_t client;
-
-    if(net->num_clients >= MAX_CONNECTIONS){
-        return 0;
-    }
-
-    memset(&client, 0, sizeof(struct connection_t));
-
-    client.sock = accept(net->server.sock, (struct sockaddr *) &(client.socket), &soclen);
-
-    if(client.sock < 0){
-        return client.sock;
-    }
-
-    net_lock(net);
-    conn_client_ctor(&(net->clients[net->num_clients++]), client.sock, &(client.socket));
-    net_unlock(net);
-
-    printf_top("[+]Added client %ld\n", net->num_clients);
-
-    return 0;
-}
-
-void net_remove(net_t *net, int i) {
-    int num_to_move;
-    struct connection_t* client,* next_client;
-
-
-    client = &(net->clients[i]);
-    next_client = &(net->clients[i+1]);
-                
-    conn_dtor(client);
-
-    num_to_move = net->num_clients - (i + 1);
-
-    memmove(client, next_client, num_to_move * sizeof(struct connection_t));
-
-    net->num_clients--;
-    printf_top("[-]Removed client %d, now down to %ld\n", i, net->num_clients);
-}
-
-void net_send(net_t *net, char* data, size_t len) {
-    if(net->num_clients == 0) {
-        return;
-    }
-    
-    net_lock(net);
-
-    for(int i = 0; i < net->num_clients; i++) {
-        int ret;
-        struct connection_t* client;
-
-        client = &(net->clients[i]);
-        ret = conn_send(client, data, len);
-
-        if(ret < 0) {
-            if(errno == ECONNRESET || errno == EINPROGRESS) {
-                net_remove(net, i);
-                i--;
-            }
-            else {
-                //TODO: unknown error
-            }
+void netAccept(NetServer* net) {
+    if (net->listen_fd < 0) {
+        u64 now = svcGetSystemTick();
+        if (now < net->retry_at)
+            return;
+        if (!openListener(net)) {
+            net->retry_at = now + LISTEN_RETRY_TICKS;
+            return;
         }
     }
 
-    net_unlock(net);
+    while (net->num_clients < NET_MAX_CLIENTS) {
+        sockaddr_in peer;
+        socklen_t   peer_len = sizeof(peer);
+        int fd = accept(net->listen_fd, reinterpret_cast<sockaddr*>(&peer), &peer_len);
+        if (fd < 0) {
+            // Nothing pending is the normal case; anything else means the
+            // listener is dead (e.g. wifi dropped), so rebuild it later.
+            if (!wouldBlock(errno)) {
+                closeListener(net);
+                net->retry_at = svcGetSystemTick() + LISTEN_RETRY_TICKS;
+            }
+            return;
+        }
+        // A client that stops reading must never stall the input loop.
+        if (!setNonBlocking(fd)) {
+            close(fd);
+            continue;
+        }
+        net->clients[net->num_clients++] = fd;
+    }
 }
 
-void net_lock(net_t *net) {
-    //LightLock_Lock(&(net->connection_lock));
-}
-
-void net_unlock(net_t *net) {
-    //LightLock_Unlock(&(net->connection_lock));
+void netBroadcast(NetServer* net, const void* data, size_t len) {
+    for (int i = 0; i < net->num_clients;) {
+        ssize_t sent = send(net->clients[i], data, len, 0);
+        // Sent in full, or the client's buffer is full and it just misses
+        // this frame. A short write would desync the stream, so it counts as
+        // a dead client like any other error.
+        if (sent == static_cast<ssize_t>(len) || (sent < 0 && wouldBlock(errno)))
+            i++;
+        else
+            removeClient(net, i);
+    }
 }

@@ -1,32 +1,16 @@
 #!/usr/bin/python3
 
-from enum import IntEnum
-import json
-import signal
-import socket as soc
-from threading import Thread
-
+import os
 import sys
 
 import tkinter as tk
 
-BIT = lambda x: 1<<x
+from threeinput import BTN, Conn, IR_STATUS, CS_STATUS, WIFI_STATUS
 
-class BTN(IntEnum):
-    A       = BIT(0) 
-    B       = BIT(1) 
-    SEL     = BIT(2) 
-    START   = BIT(3) 
-    D_RIGHT = BIT(4) 
-    D_LEFT  = BIT(5) 
-    D_UP    = BIT(6) 
-    D_DOWN  = BIT(7) 
-    R       = BIT(8) 
-    L       = BIT(9) 
-    X       = BIT(10) 
-    Y       = BIT(11) 
-    ZL      = BIT(14) 
-    ZR      = BIT(15) 
+# Longest line the info labels may have before they wrap, so they fit small windows.
+LABEL_WRAP = 260
+# Width (in characters) of each button label, so the two columns stay put as values change.
+BTN_LABEL_WIDTH = 15
 
 btn_cords = {
     BTN.A       : (934,212),
@@ -43,97 +27,16 @@ btn_cords = {
     BTN.Y       : (826, 213),
     BTN.ZL      : (),
     BTN.ZR      : (),
+    BTN.HOME    : (),
+    BTN.C_RIGHT : (),
+    BTN.C_LEFT  : (),
+    BTN.C_UP    : (),
+    BTN.C_DOWN  : (),
+    BTN.CPAD_RIGHT : (),
+    BTN.CPAD_LEFT  : (),
+    BTN.CPAD_UP    : (),
+    BTN.CPAD_DOWN  : (),
 }
-
-class Conn():
-    def __init__(self, ip, port):
-        self.jsons = []
-        self.buf = b''
-        self.s = self.connect(ip, port)
-        self.keepGoing = True
-        self.netThread = Thread(target=self.netMain)
-        self.parseThread = Thread(target=self.parseMain)
-        self.netThread.start()
-        self.parseThread.start()
-    
-    def stop(self):
-        self.keepGoing = False;
-    
-    def join(self):
-        self.netThread.join()
-        print('[*] net join')
-        self.parseThread.join()
-        print('[*] pasrse join')
-    
-    def connect(self, ip, port):
-        s = soc.socket(soc.AF_INET, soc.SOCK_STREAM)
-        s.connect((ip, port))
-        return s
-
-    def netMain(self):
-        print("[*] starting netMain")
-        while self.keepGoing:
-            buf = self.s.recv(256)
-            if b'disconnecting' in buf:
-                self.stop()
-                continue
-            if len(self.buf) > 192:
-                self.buf = buf
-            else:
-                self.buf += buf
-        self.s.close()
-        print("[*] exiting netMain")
-
-    def parseMain(self):
-        print("[*] starting parseMain")
-        while self.keepGoing:
-            if not self.buf:
-                continue
-            if b'disconnecting' in self.buf:
-                self.stop()
-                continue
-            if self.buf.find(b'{') == -1: #buffer non empty but doesn't have a json start
-                self.buf = b''
-            elif self.buf.find(b'{'):
-                self.buf = self.buf[self.buf.find(b'{'):] #trim up to the start of the json
-            print(self.buf)
-            json_end = self.buf.find(b'}')+1
-            if json_end != 0:
-                json_raw, self.buf = self.buf[:json_end], self.buf[json_end:] # strip off until the first } set
-                
-                last_open_curly = json_raw.rfind(b'{')
-                
-                if json_raw!=0:
-                    #print('\t[@]',json_raw.decode())
-                    json_raw = json_raw[last_open_curly:]
-                    #print('\t[@]',json_raw.decode())
-                try:
-                    #print(json_raw.decode())
-                    j = json.loads(json_raw)#try and parse the { ... } pair
-                    
-                    btn_raw = j.pop('btn',0)
-                    
-                    for btn in BTN:
-                        if btn_raw & btn:
-                            j[btn] = True
-                        else:
-                            j[btn] = False
-                    self.jsons.append(j) 
-                except ValueError as e:
-                    print('Invalid Json blob, ', json_raw.decode())
-
-        print("[*] exiting parseMain")
-
-    def hasJson(self):
-        l = len(self.jsons)
-        if l > 3:
-            print(f'[#] backlog too big {l} jsons')
-            self.jsons = []
-            return False
-        return l > 0
-
-    def getJson(self):       
-        return self.jsons.pop(0)
 
 class Arrow():
     def __init__(self, x, y, cvs, scale = 1/3.0):
@@ -198,7 +101,7 @@ class Window(tk.Frame):
     def __init__(self, ip, port, master=None):
         tk.Frame.__init__(self, master)
         self.master = master
-        self.overlay_img = tk.PhotoImage(file="shitty_overlay.png")
+        self.overlay_img = tk.PhotoImage(file=os.path.join(os.path.dirname(os.path.abspath(__file__)), "shitty_overlay.png"))
         self.overlay_cvs = tk.Canvas(master, width=980, height=551)
         self.overlay_cvs.place(x=0, y=0)
         self.overlay_cvs.create_image((490,276),image=self.overlay_img)
@@ -222,26 +125,28 @@ class Window(tk.Frame):
 
         self.keepGoing = True
 
-        self.labels = {}
-        j = 0
-        for i,btn in enumerate(BTN):
-            lbl = tk.Label(text=btn.name)
-            self.labels[btn] = lbl
-            lbl.grid(row=i, column=1,sticky='nwes')
-            j = i
-        self.labels['cp'] = lbl = tk.Label(text='cp')
-        lbl.grid(row=j, column = 1, stick='nwes')
-        j += 1
+        # Side panel next to the overlay. It is its own frame (not rows of the
+        # window grid), otherwise the 551 px tall canvas row stretches the first
+        # label and pushes everything else off the screen.
+        self.info = tk.Frame(master)
+        self.info.grid(row=0, column=1, sticky='nw', padx=8, pady=4)
 
-        self.labels['tp'] = lbl = tk.Label(text='tp')
-        lbl.grid(row=j, column = 1, stick='nwes')
-        j += 1
-            
-        
-    
+        self.labels = {}
+        buttons = list(BTN)
+        rows = (len(buttons) + 1) // 2  # two columns of buttons
+        for i, btn in enumerate(buttons):
+            lbl = tk.Label(self.info, text=btn.name, width=BTN_LABEL_WIDTH, anchor='w')
+            self.labels[btn] = lbl
+            lbl.grid(row=i % rows, column=i // rows, sticky='w')
+
+        for k, name in enumerate(('cp', 'tp', 'cs', 'ir', 'wifi')):
+            lbl = tk.Label(self.info, text=name, wraplength=LABEL_WRAP, justify='left', anchor='w')
+            self.labels[name] = lbl
+            lbl.grid(row=rows + 1 + k, column=0, columnspan=2, sticky='w', pady=(6 if k == 0 else 0, 0))
+
     def update_lable(self):
-        if self.c.hasJson():
-            self.nextInput = self.c.getJson()
+        if self.c.hasInput():
+            self.nextInput = self.c.getInput()
             for btn in BTN:
                 if not self.keepGoing:
                     break
@@ -259,6 +164,10 @@ class Window(tk.Frame):
             self.labels['tp'].config(text=f'tp:({tp_x},{tp_y})')
 
             self.touch.draw(tp_x,tp_y)
+
+            self.labels['cs'].config(text=f"c-stick:({self.nextInput['cs_x']},{self.nextInput['cs_y']}) {CS_STATUS.get(self.nextInput['cs_status'], '?')} (0x{self.nextInput['cs_error']:08X})")
+            self.labels['wifi'].config(text=f"WIFI: {WIFI_STATUS.get(self.nextInput['wifi_status'], '?')} (recoveries {self.nextInput['wifi_recoveries']})")
+            self.labels['ir'].config(text=f"IR: {IR_STATUS.get(self.nextInput['ir_status'], '?')} (0x{self.nextInput['ir_error']:08X})")
         if not self.c.keepGoing:
             self.master.quit()
         if self.keepGoing:

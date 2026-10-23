@@ -5,24 +5,28 @@
 ## Features
 Launch the Launcher, write down the IP address and port that is presented to you, press A, and then connect to the 3DS IP with a client, such as the example [viewer](https://github.com/phlexplexico/3input/viewer/) (this viewer does not require the port, only the IP).
 
-The current implementation sends a JSON Object per defined frequency. The JSON object also contains escape sequences so an application can properly decode them. Here is an example as to what the JSON being sent looks like:
-```JSON
-'{\n\t"btn":268435456,\n\t"cp_x":134,\n\t"cp_y":-68,\n\t"tp_x":0,\n\t"tp_y":0,\n\t"ir_btn":14,\n\t"cpp_x":14,\n\t"cpp_y":14\n}\n'
-```
+The module streams a fixed-size 32 byte binary packet per tick over TCP (port `65534`). There is no text formatting on the 3DS side, which keeps CPU use to a minimum; clients decode the bytes themselves. All fields are little endian, with no padding or delimiters:
 
-You can then use an application to parse it, to make it more readable like so:
-```JSON
-{
-    "btn":268435456,
-    "cp_x":134,
-    "cp_y":-68,
-    "tp_x":0,
-    "tp_y":0,
-    "ir_btn":14,
-    "cpp_x":14,
-    "cpp_y":14
-}
-```
+| Offset | Type   | Field                                                                    |
+|--------|--------|--------------------------------------------------------------------------|
+| 0      | u8[2]  | Magic, `'I'` `'3'`. Scan for it to resync.                               |
+| 2      | u8     | Protocol version (`4`)                                                   |
+| 3      | u8     | Wrapping frame counter, to spot dropped frames                           |
+| 4      | u32    | Buttons, libctru `KEY_*` bit layout with ZL/ZR and the C-Stick merged in |
+| 8      | s16    | Circle pad X                                                             |
+| 10     | s16    | Circle pad Y                                                             |
+| 12     | s16    | Touch X (pixels, 0 when not touching)                                    |
+| 14     | s16    | Touch Y (pixels, 0 when not touching)                                    |
+| 16     | s16    | C-Stick X (about +-156, New 3DS)                                         |
+| 18     | s16    | C-Stick Y                                                                |
+| 20     | u8     | `ir_status`: how the ZL/ZR/C-Stick keys path is doing (see below)        |
+| 21     | u8     | `cs_status`: how the analog C-Stick path is doing (see below)            |
+| 22     | u8     | `wifi_status` (Wi-Fi keep-alive, see below)                              |
+| 23     | u8     | `wifi_recoveries`: times the link came back after a drop                 |
+| 24     | u32    | `ir_error`: detail for `ir_status`                                       |
+| 28     | u32    | `cs_error`: detail for `cs_status`                                       |
+
+Button bits: `A`=0, `B`=1, `Select`=2, `Start`=3, `Right`=4, `Left`=5, `Up`=6, `Down`=7, `R`=8, `L`=9, `X`=10, `Y`=11, `ZL`=14, `ZR`=15, `HOME`=16 (a ~100 ms pulse per press, the system only announces presses), `C-Stick Right/Left/Up/Down`=24/25/26/27, `Circle pad Right/Left/Up/Down`=28/29/30/31. The wire format is defined in [`source/protocol.h`](source/protocol.h), and [`viewer/threeinput.py`](viewer/threeinput.py) is a reference decoder (`struct.Struct('<2sBBIhhhhhhBBBBII')`).
 
 ## Why?
 Currently, the only way to view inputs for the 3DS is either using a handcam, or via the use of NTR and [coNTRoller-overlay](https://github.com/zed0/coNTRoller-overlay). NTR can be rather buggy, and also uses a lot more resources than necessary to just show inputs. The aim is to replace it with something less buggy, and that can run on both new and old 3DS'.
@@ -39,24 +43,39 @@ Currently, the only way to view inputs for the 3DS is either using a handcam, or
  - [`bannertool`](https://github.com/Steveice10/bannertool/releases) on your `PATH`.
  - [`makerom`](https://github.com/3DSGuy/Project_CTR/releases) on your `PATH`.
 
- Run `make` in both the `Launcher` directory, and the root directory. Install both `CIAs` on your 3DS, *make sure you're connected to a Wifi Access Point* and launch the Launcher! Now connect with a client (such as [3SharpView](https://github.com/PhlexPlexico/3SharpView) ). Alternatively, check the [Releases](https://github.com/PhlexPlexico/3input/releases) tab for the files.
+ Run `make` in the root directory: it builds both `3input.cia` (the module) and `Launcher/Launcher.cia`. `make module` or `make launcher` builds just one, and `make clean` cleans both. Install both `CIAs` on your 3DS, *make sure you're connected to a Wifi Access Point* and launch the Launcher! Now connect with a client (such as [3SharpView](https://github.com/PhlexPlexico/3SharpView) ). Alternatively, check the [Releases](https://github.com/PhlexPlexico/3input/releases) tab for the files.
 
 ## Installing
-In order to install, you must install *both* CIA files, and then place the `code.ips` file in the same structure in the release. `/luma/titles/0004013000003302/code.ips`. This patch is to allow multiple hooks into the RST service. Once both CIAs are installed, run the launcher, write your IP and port down, and then press A to launch!
+Install *both* CIA files (`Launcher.cia` and `3input.cia`) and make sure Luma's "Enable loading external FIRMs and modules" option is on (hold SELECT while booting for the config menu). The IR module needs `code.ips` (rehid's patch with one addition, described below, so it stays compatible with [rehid](https://github.com/hax0kartik/rehid)) at `/luma/sysmodules/0004013000003302.ips` on the SD card (a flat file named after the title ID, not a folder; older Luma versions used `/luma/titles/0004013000003302/code.ips`), followed by a reboot.
 
-## Changing Sending Frequency
-The main thread of the module is also reading inputs. If you wish to exit, you can press `SEL+START` to close the application and destroy anything created by it. The following will change the send rate of the inputs:
-- `SEL+X` - 140 per second.
-- `SEL+Y` - 60 per second. (Default)
-- `SEL+A` - 10 per second. 
-- `SEL+B` - 1 per second.
+You do not need to copy it yourself: `Launcher.cia` bundles `code.ips`. On a New 3DS, or an Old 3DS with a Circle Pad Pro attached (the launcher checks), it looks for the file on start and tells you whether it is installed. If it is missing it creates `/luma/sysmodules` and copies the file in, then asks you to **restart the console and relaunch the app**. An existing file is never overwritten, so rehid's own copy is left alone. If you installed an earlier `code.ips` (rehid's, or an older 3Input), the launcher reports that it differs from the bundled copy: delete `/luma/sysmodules/0004013000003302.ips` and run the launcher again to get the current one, then reboot. Once it is installed, write down the IP and port shown by the launcher and press A to launch.
+
+Use rehid's `code.ips` with rehid's HID module, or on its own? With rehid's patch ZL/ZR are no longer reported to apps through `ir:rst` (rehid puts them into HID instead), so without rehid installed an app that reads ZL/ZR from `ir:rst` will not see them. 3Input itself reads ZL/ZR/C-Stick from the patched module either way.
+
+## Exiting the Module
+The module runs a single loop that reads inputs, handles the hotkeys below and sends to clients. While nobody is connected it idles at a low tick rate, and only runs at the send rate once a client connects. Hold `SELECT` and press:
 - `SEL+START` - Exits the module.
 
-## Viewing the Output
-In order to view the output, please consider using a tool such as [3SharpView](https://github.com/PhlexPlexico/3SharpView)
+## How ZL/ZR and the C-Stick are read
+HID does not report ZL, ZR or the C-Stick, they come from the IR module (`ir:rst` on New 3DS). Taking `ir:rst` over from a separate module means a game can no longer get it, so 3Input never does. It follows the same approach as [rehid](https://github.com/hax0kartik/rehid):
+- `code.ips` (rehid's) hooks the IR module's `ir:rst` sampling thread so it copies the latest ZL/ZR/C-Stick word into the module's own memory every time it samples, raises the session limit from 2 to 4, and exposes the physical address of that word through `ir:u`.
+- 3Input resolves that address once (a brief `ir:u` open/close at startup) and from then on reads the keys with a plain memory load.
+- It never calls `Initialize` or `Shutdown` on `ir:rst` and holds no `ir:rst` session. Whenever a game (or the system) has `ir:rst` running, the word is live; all four sessions stay available to games.
+- libctru's own `ir:rst` session is disabled too (previously `ir:rst` was initialised, shut down and initialised again at startup).
 
-## TODO
-There's a few more things in the TODO pile, and these can be found mainly in the code, which will be ported over to the Issues/Project section in GitHub. Most of it is quality of life (i.e. WiFi issues).
+Because nothing here drives the sampling, ZL/ZR/C-Stick read as 0 while no process is using `ir:rst`.
+
+## Keeping Wi-Fi on while a game runs
+3Input does the same as Rosalina's debugger:
+- on start it opens `ac`, asks it to connect (all slots allowed) and keeps the session and that request for as long as the module runs;
+- about once a second it checks the link (`ACU_GetStatus`). If it dropped it switches the radio on (`NWMEXT_ControlWirelessEnabled(true)`) and asks `ac` to connect again, every 3 seconds, at most 10 times per drop;
+- after the link comes back it rebuilds the listening socket, since the IP may have changed.
+
+
+## Viewing the Output
+In order to view the output, use a client that understands the binary packet described above, such as the bundled viewer. `python3 viewer/main.py <3ds ip>` is the tkinter overlay, and `python3 viewer/cli.py <3ds ip>` is a terminal version that needs nothing but Python (on NixOS, `nix-shell -p 'python3.withPackages (p: [p.tkinter])'` provides tkinter for the overlay). Both use [`viewer/threeinput.py`](viewer/threeinput.py), a reference decoder. Clients written for the old JSON output, such as 3SharpView, need updating to the new format.
+
+If you wish for a browser source solution, you can use [3InView](https://github.com/phlexplexico/3inview) which is a web-browser based input viewer so you can add it as a browser source in OBS!
 
 ## License
 This project is licensed under [GNU GENERAL PUBLIC LICENSE V3](https://www.gnu.org/licenses/gpl-3.0.en.html). Feel free to distribute, contribute, and make changes! Pull requests to improve functionality is always welcome!

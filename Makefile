@@ -48,16 +48,16 @@ APP_UNIQUE_ID   :=  $(shell echo $(APP_UNIQUE_ID) | cut -c1-8)
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard
 
-CFLAGS	:=	-g -Wall -Wno-format -O0 -mword-relocations \
-			-fomit-frame-pointer -ffast-math \
+CFLAGS	:=	-Wall -Wextra -Wno-unused-parameter -O2 -mword-relocations \
+			-fomit-frame-pointer -ffunction-sections -fdata-sections \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DNO_UI
+CFLAGS	+=	$(INCLUDE) -D__3DS__ $(CFLAGS_EXTRA)
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -std=gnu++11 -fpermissive 
+CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-specs=3dsx.specs $(ARCH) -Wl,--gc-sections -Wl,-Map,$(notdir $*.map)
 
 LIBS	:= -lctru -lm
 
@@ -126,10 +126,21 @@ else
 	export APP_ICON := $(TOPDIR)/$(ICON)
 endif
 
-.PHONY: $(BUILD) clean all
+.PHONY: $(BUILD) module launcher clean all
 
 #---------------------------------------------------------------------------------
-all: $(BUILD)
+# `make` builds both CIAs: the module (this directory) and the Launcher (Launcher/).
+# `make module` or `make launcher` builds just one.
+all: module launcher
+
+module: $(BUILD)
+
+# TOPDIR is exported by this Makefile and the Launcher's Makefile only uses it
+# with ?=, so it has to be overridden or the Launcher would look for its
+# assets in this directory.
+launcher:
+	@echo launcher
+	@$(MAKE) --no-print-directory -C Launcher TOPDIR=$(CURDIR)/Launcher
 
 $(BUILD):
 	@echo $@
@@ -141,6 +152,7 @@ $(BUILD):
 clean:
 	@echo clean ...
 	@rm -rf $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf $(TARGET).3ds $(TARGET).cia
+	@$(MAKE) --no-print-directory -C Launcher clean TOPDIR=$(CURDIR)/Launcher
 
 
 #---------------------------------------------------------------------------------
